@@ -827,12 +827,18 @@ var ScoreBoard = new scoreBoard('-GOBANG-');
 
 var myWinStroke = new winStroke(0, 0, 0);
 
-addEventListener('touchend', ClickMission);
-addEventListener('touchmove', MoveMission)
-addEventListener('click', ClickMission);
-addEventListener('mousemove', MoveMission);
-function MoveMission(event) {
-    let realPos = mousePos(event.clientX, event.clientY);
+let TouchX = -1;
+let TouchY = -1;
+/*addEventListener('touchstart', (event)=>{
+    TouchX = event.touches[0].clientX;
+    TouchY = event.touches[0].clientY;
+});*/
+addEventListener('touchend', TouchClickMission);
+addEventListener('touchmove', TouchMoveMission)
+addEventListener('click', MouseClickMission);
+addEventListener('mousemove', MouseMoveMission);
+function DoMove(x,y) {
+    let realPos = mousePos(x, y);
     let moveX = realPos[0];
     let moveY = realPos[1];
     moveX = (moveX < 0) ? 0 : ((moveX >= BoardSize) ? (BoardSize - 1) : moveX);
@@ -843,8 +849,8 @@ function MoveMission(event) {
     myIndicator.targetY = tempPos[1];
 
     if (ScoreBoard.show) {
-        let mouseX = event.clientX;
-        let mouseY = event.clientY;
+        let mouseX = x;
+        let mouseY = y;
         let mouse0X = mouseX - ScoreBoard.realX - ScoreBoard.real0X * ScoreBoard.ScaleFactor;
         let mouse0Y = mouseY - ScoreBoard.realY - ScoreBoard.real0Y * ScoreBoard.ScaleFactor;
 
@@ -860,14 +866,12 @@ function MoveMission(event) {
         }
     }
 }
-function ClickMission(event) {
-    //console.log(Board.pieces);
-
+function DoClick(x,y) {
     if (!GameState) {
 
         if (ScoreBoard.show) {
-            let mouseX = event.clientX;
-            let mouseY = event.clientY;
+            let mouseX = x;
+            let mouseY = y;
             let mouse0X = mouseX - ScoreBoard.realX - ScoreBoard.real0X * ScoreBoard.ScaleFactor;
             let mouse0Y = mouseY - ScoreBoard.realY - ScoreBoard.real0Y * ScoreBoard.ScaleFactor;
 
@@ -902,7 +906,7 @@ function ClickMission(event) {
     if (TimeCount != 0 || nowPlayerIndex != PlayerChoiceIndex)
         return;
 
-    let realPos = mousePos(event.clientX, event.clientY);
+    let realPos = mousePos(x, y);
     let clickX = realPos[0];
     let clickY = realPos[1];
 
@@ -929,6 +933,24 @@ function ClickMission(event) {
         pieces.push(thisPiece);
         //console.log(thisPiece);
     }
+}
+
+function MouseMoveMission(event){
+    DoMove(event.clientX,event.clientY);
+}
+
+function MouseClickMission(event){
+    DoClick(event.clientX,event.clientY);
+}
+
+function TouchMoveMission(event){
+    TouchX = event.touches[0].clientX;
+    TouchY = event.touches[0].clientY;
+    DoMove(event.touches[0].clientX,event.touches[0].clientY);
+}
+
+function TouchClickMission(event){
+    DoClick(TouchX,TouchY);
 }
 
 
@@ -1011,23 +1033,23 @@ function drawGrid() {
     c.fillStyle = 'rgb(0,0,0,1)';
     c.beginPath();
     let H8 = piecePos(7, 7);
-    c.arc(H8[0], H8[1], 5, 0, Math.PI * 2.0, false);
+    c.arc(H8[0], H8[1], pieceSize*0.1, 0, Math.PI * 2.0, false);
     c.fill();
     c.beginPath();
     let D12 = piecePos(3, 3);
-    c.arc(D12[0], D12[1], 5, 0, Math.PI * 2.0, false);
+    c.arc(D12[0], D12[1], pieceSize*0.1, 0, Math.PI * 2.0, false);
     c.fill();
     c.beginPath();
     let D4 = piecePos(3, 11);
-    c.arc(D4[0], D4[1], 5, 0, Math.PI * 2.0, false);
+    c.arc(D4[0], D4[1], pieceSize*0.1, 0, Math.PI * 2.0, false);
     c.fill();
     c.beginPath();
     let L12 = piecePos(11, 3);
-    c.arc(L12[0], L12[1], 5, 0, Math.PI * 2.0, false);
+    c.arc(L12[0], L12[1], pieceSize*0.1, 0, Math.PI * 2.0, false);
     c.fill();
     c.beginPath();
     let L4 = piecePos(11, 11);
-    c.arc(L4[0], L4[1], 5, 0, Math.PI * 2.0, false);
+    c.arc(L4[0], L4[1], pieceSize*0.1, 0, Math.PI * 2.0, false);
     c.fill();
 }
 
