@@ -827,7 +827,40 @@ var ScoreBoard = new scoreBoard('-GOBANG-');
 
 var myWinStroke = new winStroke(0, 0, 0);
 
-addEventListener('touchend', (event) => {
+addEventListener('touchend', ClickMission);
+addEventListener('touchmove', MoveMission)
+addEventListener('click', ClickMission);
+addEventListener('mousemove', MoveMission);
+function MoveMission(event) {
+    let realPos = mousePos(event.clientX, event.clientY);
+    let moveX = realPos[0];
+    let moveY = realPos[1];
+    moveX = (moveX < 0) ? 0 : ((moveX >= BoardSize) ? (BoardSize - 1) : moveX);
+    moveY = (moveY < 0) ? 0 : ((moveY >= BoardSize) ? (BoardSize - 1) : moveY);
+    //myIndicator.targetScale = (Board.pieces[moveX][moveY] === -1) ? 1 : 1.2;
+    let tempPos = piecePos(moveX, moveY);
+    myIndicator.targetX = tempPos[0];
+    myIndicator.targetY = tempPos[1];
+
+    if (ScoreBoard.show) {
+        let mouseX = event.clientX;
+        let mouseY = event.clientY;
+        let mouse0X = mouseX - ScoreBoard.realX - ScoreBoard.real0X * ScoreBoard.ScaleFactor;
+        let mouse0Y = mouseY - ScoreBoard.realY - ScoreBoard.real0Y * ScoreBoard.ScaleFactor;
+
+        let mouse1X = mouseX - ScoreBoard.realX - ScoreBoard.real1X * ScoreBoard.ScaleFactor;
+        let mouse1Y = mouseY - ScoreBoard.realY - ScoreBoard.real1Y * ScoreBoard.ScaleFactor;
+
+        if (mouse0X * mouse0X + mouse0Y * mouse0Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
+            ScoreBoard.choice = 0;
+        } else if (mouse1X * mouse1X + mouse1Y * mouse1Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
+            ScoreBoard.choice = 1;
+        } else {
+            ScoreBoard.choice = -1;
+        }
+    }
+}
+function ClickMission(event) {
     //console.log(Board.pieces);
 
     if (!GameState) {
@@ -896,136 +929,8 @@ addEventListener('touchend', (event) => {
         pieces.push(thisPiece);
         //console.log(thisPiece);
     }
-});
-addEventListener('touchmove', (event) => {
-    let realPos = mousePos(event.clientX, event.clientY);
-    let moveX = realPos[0];
-    let moveY = realPos[1];
-    moveX = (moveX < 0) ? 0 : ((moveX >= BoardSize) ? (BoardSize - 1) : moveX);
-    moveY = (moveY < 0) ? 0 : ((moveY >= BoardSize) ? (BoardSize - 1) : moveY);
-    //myIndicator.targetScale = (Board.pieces[moveX][moveY] === -1) ? 1 : 1.2;
-    let tempPos = piecePos(moveX, moveY);
-    myIndicator.targetX = tempPos[0];
-    myIndicator.targetY = tempPos[1];
+}
 
-    if (ScoreBoard.show) {
-        let mouseX = event.clientX;
-        let mouseY = event.clientY;
-        let mouse0X = mouseX - ScoreBoard.realX - ScoreBoard.real0X * ScoreBoard.ScaleFactor;
-        let mouse0Y = mouseY - ScoreBoard.realY - ScoreBoard.real0Y * ScoreBoard.ScaleFactor;
-
-        let mouse1X = mouseX - ScoreBoard.realX - ScoreBoard.real1X * ScoreBoard.ScaleFactor;
-        let mouse1Y = mouseY - ScoreBoard.realY - ScoreBoard.real1Y * ScoreBoard.ScaleFactor;
-
-        if (mouse0X * mouse0X + mouse0Y * mouse0Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
-            ScoreBoard.choice = 0;
-        } else if (mouse1X * mouse1X + mouse1Y * mouse1Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
-            ScoreBoard.choice = 1;
-        } else {
-            ScoreBoard.choice = -1;
-        }
-    }
-})
-addEventListener('click', (event) => {
-    //console.log(Board.pieces);
-
-    if (!GameState) {
-
-        if (ScoreBoard.show) {
-            let mouseX = event.clientX;
-            let mouseY = event.clientY;
-            let mouse0X = mouseX - ScoreBoard.realX - ScoreBoard.real0X * ScoreBoard.ScaleFactor;
-            let mouse0Y = mouseY - ScoreBoard.realY - ScoreBoard.real0Y * ScoreBoard.ScaleFactor;
-
-            let mouse1X = mouseX - ScoreBoard.realX - ScoreBoard.real1X * ScoreBoard.ScaleFactor;
-            let mouse1Y = mouseY - ScoreBoard.realY - ScoreBoard.real1Y * ScoreBoard.ScaleFactor;
-
-            if (mouse0X * mouse0X + mouse0Y * mouse0Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
-                myWinStroke.targetAlpha = 0;
-                PlayerChoiceIndex = 0;
-                GameState = true;
-                ScoreBoard.show = false;
-                ScoreBoard.choice = -1;
-                pieces = [];
-                Board.clear();
-                nowPlayerIndex = 0;
-            } else if (mouse1X * mouse1X + mouse1Y * mouse1Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
-                myWinStroke.targetAlpha = 0;
-                PlayerChoiceIndex = 1;
-                GameState = true;
-                ScoreBoard.show = false;
-                ScoreBoard.choice = -1;
-                pieces = [];
-                Board.clear();
-                nowPlayerIndex = 0;
-            } else {
-                return;
-            }
-        }
-
-        return;
-    }
-    if (TimeCount != 0 || nowPlayerIndex != PlayerChoiceIndex)
-        return;
-
-    let realPos = mousePos(event.clientX, event.clientY);
-    let clickX = realPos[0];
-    let clickY = realPos[1];
-
-    if (clickX < 0 || clickX >= BoardSize || clickY < 0 || clickY > BoardSize) {
-        return;
-    }
-    if (Board.pieces[clickX][clickY] === -1) {
-        let thisPiece = new piece(clickX, clickY, nowPlayerIndex);
-
-        thisPiece.draw();
-        Board.pieces[clickX][clickY] = nowPlayerIndex;
-        TimeCount = StepTime;
-        let win = Board.win(clickX, clickY, nowPlayerIndex);
-        if (win[0] != -1) {
-            //console.log(win[0]);
-            let mousePos = piecePos(realPos[0], realPos[1]);
-            myWinStroke.reset(mousePos[0], mousePos[1], win[1]);
-            GameState = false;
-            TimeCount = WinTime;
-            //ScoreBoard.show = true;
-            ScoreBoard.text = (win[0] == PlayerChoiceIndex) ? "-You Win-" : "-You Fail-";
-        }
-        nowPlayerIndex = 1 - nowPlayerIndex;
-        pieces.push(thisPiece);
-        //console.log(thisPiece);
-    }
-});
-
-addEventListener('mousemove', (event) => {
-    let realPos = mousePos(event.clientX, event.clientY);
-    let moveX = realPos[0];
-    let moveY = realPos[1];
-    moveX = (moveX < 0) ? 0 : ((moveX >= BoardSize) ? (BoardSize - 1) : moveX);
-    moveY = (moveY < 0) ? 0 : ((moveY >= BoardSize) ? (BoardSize - 1) : moveY);
-    //myIndicator.targetScale = (Board.pieces[moveX][moveY] === -1) ? 1 : 1.2;
-    let tempPos = piecePos(moveX, moveY);
-    myIndicator.targetX = tempPos[0];
-    myIndicator.targetY = tempPos[1];
-
-    if (ScoreBoard.show) {
-        let mouseX = event.clientX;
-        let mouseY = event.clientY;
-        let mouse0X = mouseX - ScoreBoard.realX - ScoreBoard.real0X * ScoreBoard.ScaleFactor;
-        let mouse0Y = mouseY - ScoreBoard.realY - ScoreBoard.real0Y * ScoreBoard.ScaleFactor;
-
-        let mouse1X = mouseX - ScoreBoard.realX - ScoreBoard.real1X * ScoreBoard.ScaleFactor;
-        let mouse1Y = mouseY - ScoreBoard.realY - ScoreBoard.real1Y * ScoreBoard.ScaleFactor;
-
-        if (mouse0X * mouse0X + mouse0Y * mouse0Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
-            ScoreBoard.choice = 0;
-        } else if (mouse1X * mouse1X + mouse1Y * mouse1Y < (0.06 * ScoreBoard.ScaleFactor) * (0.06 * ScoreBoard.ScaleFactor)) {
-            ScoreBoard.choice = 1;
-        } else {
-            ScoreBoard.choice = -1;
-        }
-    }
-})
 
 function AIPlayer() {
     let x, y;
