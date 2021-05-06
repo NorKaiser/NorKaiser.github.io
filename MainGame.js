@@ -4,7 +4,7 @@ const w = 540;
 const h = 960;
 const mapSize = 13;
 const defaultCameraZoom = 1;
-const controlPanle = 0.6;
+const controlPanle = 0.65;
 const controlMode = 1
 
 let keyboard;
@@ -13,6 +13,7 @@ const yVector = new Phaser.Math.Vector2(-45, -25.5);
 var playerPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var CameraPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+var PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var cameraZoom = defaultCameraZoom;
 let playerPosture = 0;
 let aniTime = 10 / FPS;
@@ -36,6 +37,7 @@ class MainGame extends Phaser.Scene {
     key = 'MainGame';
     preload() {
 
+        this.cameras.main.backgroundColor.setTo(50, 50, 50);
         var progressBar = this.add.graphics();
         var progressBox = this.add.graphics();
         progressBar.setScrollFactor(0,0);
@@ -84,7 +86,8 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('HighScore', 'img/HighScore.png', { frameWidth: 256, frameHeight: 256 });
 
         this.load.spritesheet('Power', 'img/Power.png', { frameWidth: 64, frameHeight: 4 });
-        this.load.image('KeyMap', 'img/KeyMap.png');
+        this.load.spritesheet('PowerMax', 'img/PowerMax.png', { frameWidth: 128, frameHeight: 64 });
+        this.load.spritesheet('KeyMap', 'img/KeyMap.png', { frameWidth: 128, frameHeight: 80 });
 
 
         this.load.image('MainUI','img/MainUI.png');
@@ -231,6 +234,13 @@ class MainGame extends Phaser.Scene {
             //repeat: -1
         })
 
+        this.anims.create({
+            key: 'PowerMax',
+            frames: this.anims.generateFrameNumbers('PowerMax', { start: 0, end: 31 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+
     }
 
     animateControl() {
@@ -329,7 +339,29 @@ class MainGame extends Phaser.Scene {
         this.cam.setZoom(1.3);
         this.cam.backgroundColor.setTo(50, 50, 50);
 
-        //this.UICam = this.add.cameras()
+        
+        this.PowerBar = this.add.image(0,h*0.05,'Power',0);
+        this.PowerBar.setScale(1.5,1.5);
+
+        this.MainUI = this.add.image(128-w/2,128-h/2,'MainUI');
+
+        this.KeyMap = this.add.image(0,h*(1-(1-controlPanle)/2)-h/2,'KeyMap',0);
+        this.KeyMap.setScale(w*0.75/128,w*0.75/128);
+
+
+        var style = { font: "bold 75px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
+        this.ScoreText = this.add.text(20-w/2, 20-h/2, Score, style);
+
+        this.UIContainer = this.add.container(w/2,h/2,[this.MainUI,this.KeyMap,this.ScoreText]);
+        this.UIContainer.setScrollFactor(0,0);
+        this.UIContainer.setDepth(50-playerPos.x-playerPos.x);
+
+        this.PlayerUI = this.add.container(0,0,[this.PowerBar]);
+        this.PlayerUI.setDepth(40-playerPos.x-playerPos.x);
+        //this.PlayerUI.blendMode = 'ADD';
+
+        //console.log(this.UIContainer.depth);
+
 
 
         this.makeAni();
@@ -364,6 +396,7 @@ class MainGame extends Phaser.Scene {
             }
             nextInput = 0;
             this.animateControl();
+            this.KeyMap.setFrame(1);
         });
         keyboard.left.addListener("down", () => {
             if (timeCount > inputDelay * aniTime) {
@@ -372,6 +405,7 @@ class MainGame extends Phaser.Scene {
             }
             nextInput = 1;
             this.animateControl();
+            this.KeyMap.setFrame(2);
         });
         keyboard.down.addListener("down", () => {
             if (timeCount > inputDelay * aniTime) {
@@ -380,6 +414,7 @@ class MainGame extends Phaser.Scene {
             }
             nextInput = 2;
             this.animateControl();
+            this.KeyMap.setFrame(3);
         });
         keyboard.right.addListener("down", () => {
             if (timeCount > inputDelay * aniTime) {
@@ -388,11 +423,13 @@ class MainGame extends Phaser.Scene {
             }
             nextInput = 3;
             this.animateControl();
+            this.KeyMap.setFrame(4);
         });
-        var style = { font: "bold 75px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
-        this.ScoreText = this.add.text(20, 20, Score, style);
-        this.ScoreText.setScrollFactor(0, 0);
-        this.ScoreText.setDepth(100 - playerPos.x - playerPos.y);
+        keyboard.up.addListener("up",()=>{this.KeyMap.setFrame(0);});
+        keyboard.left.addListener("up",()=>{this.KeyMap.setFrame(0);});
+        keyboard.down.addListener("up",()=>{this.KeyMap.setFrame(0);});
+        keyboard.right.addListener("up",()=>{this.KeyMap.setFrame(0);});
+
 
         this.input.mouse.disableContextMenu();
         this.input.on('pointerdown', (pointer) => {
@@ -415,6 +452,7 @@ class MainGame extends Phaser.Scene {
                         nextInput = 3;
                         this.animateControl();
                     }
+                    this.KeyMap.setFrame(4);
                     //console.log()
                 } else if (pos && !neg) {
                     if (timeCount > inputDelay * aniTime) {
@@ -423,6 +461,7 @@ class MainGame extends Phaser.Scene {
                         nextInput = 2;
                         this.animateControl();
                     }
+                    this.KeyMap.setFrame(3);
                 } else if (!pos && neg) {
                     if (timeCount > inputDelay * aniTime) {
                         nextInput = 0;
@@ -430,6 +469,7 @@ class MainGame extends Phaser.Scene {
                         nextInput = 0;
                         this.animateControl();
                     }
+                    this.KeyMap.setFrame(1);
                 } else if (!pos && !neg) {
                     if (timeCount > inputDelay * aniTime) {
                         nextInput = 1;
@@ -437,23 +477,13 @@ class MainGame extends Phaser.Scene {
                         nextInput = 1;
                         this.animateControl();
                     }
+                    this.KeyMap.setFrame(2);
                 }
             }
         });
+        this.input.on('pointerup', (pointer) => {this.KeyMap.setFrame(0);});
 
 
-        this.MainUI = this.add.image(w/2,128,'MainUI');
-        this.MainUI.setScrollFactor(0,0);
-        this.MainUI.setDepth(50-playerPos.x-playerPos.x);
-
-        this.KeyMap = this.add.image(w/2,h/2,'KeyMap');
-        this.KeyMap.setScrollFactor(0,0);
-        this.KeyMap.setDepth(49-playerPos.x-playerPos.x);
-
-        this.PowerBar = this.add.image(383,49,'Power',0);
-        this.PowerBar.setScrollFactor(0,0);
-        this.PowerBar.setDepth(48-playerPos.x-playerPos.x);
-        this.PowerBar.setScale(278/64,50/4);
 
         /*this.PowerBar = this.add.graphics();
         this.PowerBar.setScrollFactor(0,0);
@@ -532,34 +562,31 @@ class MainGame extends Phaser.Scene {
         var speed = CameraPos.distance(preCamPos) * 1000 / delta;
         cameraZoom = ((defaultCameraZoom / Math.exp(speed / 25)) - cameraZoom) * 1 * delta / 1000 + cameraZoom;
         this.cam.setZoom(cameraZoom);
-        this.MainUI.setScale(1/cameraZoom,1/cameraZoom);
-        this.MainUI.setY(h/2-(h/2-128)/cameraZoom);
 
-        this.ScoreText.setScale(1/cameraZoom,1/cameraZoom);
-        this.ScoreText.setX(w/2-(w/2-25)/cameraZoom);
-        this.ScoreText.setY(h/2-(h/2-25)/cameraZoom);
-
-        this.PowerBar.setScale(278/64/cameraZoom,50/4/cameraZoom);
-        this.PowerBar.setX(w/2-(w/2-383)/cameraZoom);
-        this.PowerBar.setY(h/2-(h/2-49)/cameraZoom);
-
-        this.KeyMap.setScale(1/cameraZoom,1/cameraZoom);
-
-        /*this.PowerBar.clear();
-        this.PowerBar.fillStyle(0xff0000, 1);
-        let x = (385.5-130);
-        let width = (power/currentDiff) *260;
-        //console.log(power);
-        this.PowerBar.fillRect(w/2-(w/2-x)/cameraZoom, h/2-(h/2-(49-18))/cameraZoom, width/cameraZoom, 36/cameraZoom);*/
-
-        //console.log(CameraPos.x-preCamPos.x);
+        this.UIContainer.setScale(1/cameraZoom,1/cameraZoom);
         preCamPos.copy(CameraPos);
+    }
+    updatePlayerUI(delta) {
+        let posTempX = playerPosture==0?0:(playerPosture==1?-0.35:0.35);
+        let posTempY = playerPosture==0?0:(playerPosture==1?0.35:-0.35);
+        //posTempY = 0;
+        //posTempX = 0;
+        let newPos = new Phaser.Math.Vector2(playerPos.x+posTempX,playerPos.y+posTempY);
+        PlayerUIPos.lerp(newPos, 30 * delta / 1000);
+        let p = this.CalPos(PlayerUIPos);
+        this.PlayerUI.x = p.x;
+        this.PlayerUI.y = p.y;
+
+        this.PlayerUI.setScale(1/cameraZoom,1/cameraZoom);
     }
     updatePlayer() {
         let newPos = this.CalPos(playerPos);
         this.player.x = newPos.x;
         this.player.y = newPos.y;
         this.player.setDepth(20 - playerPos.x - playerPos.y);
+        this.UIContainer.setDepth(50-playerPos.x-playerPos.y);
+        this.PlayerUI.setDepth(40-playerPos.x-playerPos.y);
+        //console.log(this.UIContainer);
     }
     deleteFarBlocks() {
         let i = 0;
@@ -587,8 +614,29 @@ class MainGame extends Phaser.Scene {
                 Score += [10, 10, 25][Index];
                 power = (1 - (Math.atan(Math.pow(gameTime / 60, 1.5)) / (0.5 * Math.PI))) * (30 - 2.5) + 2.5;
                 currentDiff = power;
+
+                var powerMax = this.add.sprite(32*1.5,h*0.05, 'PowerMax');
+                powerMax.setScale(1.5,1.5);
+                this.PlayerUI.add(powerMax);
+                powerMax.anims.play('PowerMax', true);
+                powerMax.on('animationcomplete', () => {
+                    powerMax.destroy();
+                })
+
+                keyboard = this.input.keyboard.createCursorKeys();
+                keyboard.up.addListener("down", () => {
+                    if (timeCount > inputDelay * aniTime) {
+                        nextInput = 0;
+                        return;
+                    }
+                    nextInput = 0;
+                    this.animateControl();
+                    this.KeyMap.setFrame(1);
+                });
+                
+
                 this.ScoreText.text = Score;
-                console.log(Score)
+                //console.log(Score)
 
                 var newScore = this.add.sprite(w / 2, h / 2, ['HighScore', 'Low01Score', 'Low02Score'][playerPosture]);
                 var newScorePos = this.CalPos(playerPos);
@@ -616,10 +664,12 @@ class MainGame extends Phaser.Scene {
         if (power > 0) {
             power -= delta / 1000;
         } else {
+            power = 0;
             //console.log('Die!');
         }
-        this.PowerBar.setTexture('Power',Math.floor((0.999-power/currentDiff)*64));
+        this.PowerBar.setTexture('Power',Math.min(Math.floor((1-power/currentDiff)*64),63));
         this.updateCamera(delta);
+        this.updatePlayerUI(delta)
         this.spawnNewBlock();
     }
 }
