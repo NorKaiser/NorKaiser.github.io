@@ -3,7 +3,7 @@ const inputDelay = 0;
 const w = this.innerWidth;
 const h = this.innerHeight;
 const mapSize = 13;
-const defaultCameraZoom = 1;
+const defaultCameraZoom = 0.9;
 const controlPanle = 0.65;
 const controlMode = 1
 
@@ -20,11 +20,17 @@ let aniTime = 10 / FPS;
 var timeCount = 0;
 var nextInput = -1;
 var blocks = [];
+var booms = [];
 var Score = 0;
 var power = 10;
 var currentDiff = 10;
 var gameTime;
+let blockSpawnTime = 0.02;
+var blockSpawnTimeCount = 0;
+var playerDying = false;
+var playerDied = false;
 
+const maxBoomNum = 20;
 const maxBlockNum = 120;
 const newBlockSpawnRange = 20;
 const PlayerRange = 3;
@@ -68,8 +74,8 @@ class MainGame extends Phaser.Scene {
         this.cameras.main.backgroundColor.setTo(50, 50, 50);
         var progressBar = this.add.graphics();
         var progressBox = this.add.graphics();
-        progressBar.setScrollFactor(0,0);
-        progressBox.setScrollFactor(0,0);
+        progressBar.setScrollFactor(0, 0);
+        progressBox.setScrollFactor(0, 0);
         progressBox.fillStyle(0x222222, 0.8);
         progressBox.fillRect(w / 2 - 160, h / 2 - 25, 320, 50);
 
@@ -117,8 +123,18 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('PowerMax', 'img/PowerMax.png', { frameWidth: 128, frameHeight: 64 });
         this.load.spritesheet('KeyMap', 'img/KeyMap.png', { frameWidth: 128, frameHeight: 80 });
 
+        this.load.spritesheet('Number', 'img/Number.png', { frameWidth: 128, frameHeight: 100 });
 
-        this.load.image('MainUI','img/MainUI.png');
+        this.load.spritesheet('Boom', 'img/Boom.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('BoomSpawnEffect', 'img/BoomSpawn.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('BoomEffect', 'img/BoomEffect.png', { frameWidth: 256, frameHeight: 256 });
+
+        this.load.spritesheet('HighDie', 'img/HighDie.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low01Die', 'img/Low01Die.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low02Die', 'img/Low02Die.png', { frameWidth: 256, frameHeight: 256 });
+
+
+        this.load.image('MainUI', 'img/MainUI.png');
 
     }
 
@@ -269,9 +285,59 @@ class MainGame extends Phaser.Scene {
             //repeat: -1
         })
 
+        this.anims.create({
+            key: 'BoomSpawn',
+            frames: this.anims.generateFrameNumbers('Boom', { start: 0, end: 9 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+
+        this.anims.create({
+            key: 'BoomLoop',
+            frames: this.anims.generateFrameNumbers('Boom', { start: 10, end: 19 }),
+            frameRate: 25,
+            repeat: -1
+        })
+
+        this.anims.create({
+            key: 'BoomSpawnEffect',
+            frames: this.anims.generateFrameNumbers('BoomSpawnEffect', { start: 0, end: 9 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'BoomEffect',
+            frames: this.anims.generateFrameNumbers('BoomEffect', { start: 0, end: 19 }),
+            frameRate: 45,
+            //repeat: -1
+        })
+
+
+
+        this.anims.create({
+            key: 'HighDie',
+            frames: this.anims.generateFrameNumbers('HighDie', { start: 0, end: 31 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'Low01Die',
+            frames: this.anims.generateFrameNumbers('Low01Die', { start: 0, end: 31 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'Low02Die',
+            frames: this.anims.generateFrameNumbers('Low02Die', { start: 0, end: 31 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+
     }
 
     animateControl() {
+        if (playerDying)
+            return;
         this.updatePlayer();
         switch (nextInput) {
             case 0:
@@ -362,30 +428,50 @@ class MainGame extends Phaser.Scene {
                 return;
         }
     }
-
+    updateScore() {
+        let ScoreString = Score.toString();
+        let Num = [];
+        for (let i = 0; i != ScoreString.length; i++) {
+            Num[i] = Number(ScoreString[i]);
+        }
+        for (let i = 0; i != 8; i++) {
+            if (i < Num.length) {
+                this.ScoreMap[i].visible = true;
+                this.ScoreMap[i].setFrame(Num[i]);
+            } else {
+                this.ScoreMap[i].visible = false;
+            }
+        }
+    }
     create() {
         this.cam.setZoom(1.3);
         this.cam.backgroundColor.setTo(50, 50, 50);
 
-        
-        this.PowerBar = this.add.image(0,h*0.05,'Power',0);
-        this.PowerBar.setScale(1.5,1.5);
 
-        this.MainUI = this.add.image(128-w/2,128-h/2,'MainUI');
+        this.PowerBar = this.add.image(0, h * 0.05, 'Power', 0);
+        this.PowerBar.setScale(1.5, 1.5);
 
-        this.KeyMap = this.add.image(0,h*(1-(1-controlPanle)/2)-h/2,'KeyMap',0);
-        this.KeyMap.setScale(w*0.75/128,w*0.75/128);
+        this.MainUI = this.add.image(128 - w / 2, 128 - h / 2, 'MainUI');
+
+        this.KeyMap = this.add.image(0, h * (1 - (1 - controlPanle) / 2) - h / 2, 'KeyMap', 0);
+        this.KeyMap.setScale(w * 0.75 / 128, w * 0.75 / 128);
 
 
-        var style = { font: "bold 75px Arial", fill: "#fff", boundsAlignH: "center", boundsAlignV: "middle" };
-        this.ScoreText = this.add.text(20-w/2, 20-h/2, Score, style);
+        this.ScoreMap = [];
+        let scale = [1.2, 1, 0.8, 0.75, 0.72, 0.70, 0.685, 0.67];
+        let nowpos = 25;
+        for (let i = 0; i != 8; i++) {
+            nowpos += 50 * scale[i];
+            this.ScoreMap[i] = this.add.image(nowpos - w / 2, 65 - h / 2, 'Number', 0);
+            this.ScoreMap[i].setScale(scale[i], scale[i]);
+        }
 
-        this.UIContainer = this.add.container(w/2,h/2,[this.MainUI,this.KeyMap,this.ScoreText]);
-        this.UIContainer.setScrollFactor(0,0);
-        this.UIContainer.setDepth(50-playerPos.x-playerPos.x);
+        this.UIContainer = this.add.container(w / 2, h / 2, [this.MainUI, this.KeyMap].concat(this.ScoreMap));
+        this.UIContainer.setScrollFactor(0, 0);
+        this.UIContainer.setDepth(50 - playerPos.x - playerPos.x);
 
-        this.PlayerUI = this.add.container(0,0,[this.PowerBar]);
-        this.PlayerUI.setDepth(40-playerPos.x-playerPos.x);
+        this.PlayerUI = this.add.container(0, 0, [this.PowerBar]);
+        this.PlayerUI.setDepth(40 - playerPos.x - playerPos.x);
         //this.PlayerUI.blendMode = 'ADD';
 
         //console.log(this.UIContainer.depth);
@@ -397,23 +483,19 @@ class MainGame extends Phaser.Scene {
         this.player.setScale(2.5);
         this.player.anims.play('HighIdel', true);
         this.updatePlayer();
+        this.updateScore();
         this.player.on('animationcomplete', () => {
+            if (playerDying) {
+                return;
+            }
             this.updateBlocks();
+            this.updateBooms();
             if (nextInput != -1) {
                 this.animateControl();
                 return;
             }
-            switch (playerPosture) {
-                case 0:
-                    this.player.anims.play('HighIdel', true);
-                    break;
-                case 1:
-                    this.player.anims.play('Low01Idel', true);
-                    break;
-                case 2:
-                    this.player.anims.play('Low02Idel', true);
-                    break;
-            }
+            let IdelAnims = ['HighIdel', 'Low01Idel', 'Low02Idel'];
+            this.player.anims.play(IdelAnims[playerPosture], true);
             this.updatePlayer();
         })
         keyboard = this.input.keyboard.createCursorKeys();
@@ -453,10 +535,10 @@ class MainGame extends Phaser.Scene {
             this.animateControl();
             this.KeyMap.setFrame(4);
         });
-        keyboard.up.addListener("up",()=>{this.KeyMap.setFrame(0);});
-        keyboard.left.addListener("up",()=>{this.KeyMap.setFrame(0);});
-        keyboard.down.addListener("up",()=>{this.KeyMap.setFrame(0);});
-        keyboard.right.addListener("up",()=>{this.KeyMap.setFrame(0);});
+        keyboard.up.addListener("up", () => { this.KeyMap.setFrame(0); });
+        keyboard.left.addListener("up", () => { this.KeyMap.setFrame(0); });
+        keyboard.down.addListener("up", () => { this.KeyMap.setFrame(0); });
+        keyboard.right.addListener("up", () => { this.KeyMap.setFrame(0); });
 
 
         this.input.mouse.disableContextMenu();
@@ -509,7 +591,7 @@ class MainGame extends Phaser.Scene {
                 }
             }
         });
-        this.input.on('pointerup', (pointer) => {this.KeyMap.setFrame(0);});
+        this.input.on('pointerup', (pointer) => { this.KeyMap.setFrame(0); });
 
 
 
@@ -519,6 +601,17 @@ class MainGame extends Phaser.Scene {
         this.PowerBar.fillStyle(0xff0000, 1);
         this.PowerBar.fillRect(385.3-130, 49-18, 260, 36);*/
 
+    }
+    clapsBoom(x1, y1, newBlockIndex, x2, y2, thisBlockIndex) {
+        var myPostures = BlockPostures[newBlockIndex];
+        var thisPostures = BlockPostures[thisBlockIndex];
+        for (let j = 0; j != myPostures.length; j++) {
+            for (let k = 0; k != thisPostures.length; k++) {
+                if (x2 + thisPostures[k][0] == x1 + myPostures[j][0] && y2 + thisPostures[k][1] == y1 + myPostures[j][1]) {
+                    return true;
+                }
+            }
+        } return false;
     }
     claps(x, y, newBlockIndex) {
         var myPostures = BlockPostures[newBlockIndex];
@@ -531,6 +624,15 @@ class MainGame extends Phaser.Scene {
                     if (thisX + thisPostures[k][0] == x + myPostures[j][0] && thisY + thisPostures[k][1] == y + myPostures[j][1]) {
                         return true;
                     }
+                }
+            }
+        }
+        for (let i = 0; i != booms.length; i++) {
+            var thisX = booms[i].getData('XPos');
+            var thisY = booms[i].getData('YPos');
+            for (let j = 0; j != myPostures.length; j++) {
+                if (thisX == x + myPostures[j][0] && thisY == y + myPostures[j][1]) {
+                    return true;
                 }
             }
         }
@@ -580,6 +682,54 @@ class MainGame extends Phaser.Scene {
             blocks.push(newBlock);
             //}
         }
+        if (booms.length < maxBoomNum) {
+            //for (let i = blocks.length; i < maxBlockNum; i++) {
+            let x, y;
+            let newBoomIndex;
+            do {
+                x = Phaser.Math.Between(playerPos.x - newBlockSpawnRange, playerPos.x + newBlockSpawnRange);
+                y = Phaser.Math.Between(playerPos.y - newBlockSpawnRange, playerPos.y + newBlockSpawnRange);
+                newBoomIndex = 0;
+            } while (this.claps(x, y, 0) || (Math.abs(x - playerPos.x) < PlayerRange && Math.abs(y - playerPos.y) < PlayerRange))
+
+
+            let newPos = this.CalPos(new Phaser.Math.Vector2(x, y));
+
+            var newBoomEffect = this.add.sprite(w / 2, h / 2, "BoomSpawnEffect");
+
+            newBoomEffect.x = newPos.x;
+            newBoomEffect.y = newPos.y;
+            newBoomEffect.setDepth(- x - y);
+
+            newBoomEffect.setScale(1.25);
+            newBoomEffect.anims.play("BoomSpawnEffect", true);
+
+            newBoomEffect.on('animationcomplete', () => {
+                newBoomEffect.destroy();
+            })
+
+            var newBoom = this.add.sprite(w / 2, h / 2, "BoomSpawn");
+
+
+            newBoom.x = newPos.x;
+            newBoom.y = newPos.y;
+            newBoom.setDepth(- x - y);
+
+            newBoom.setScale(1.25);
+            newBoom.anims.play("BoomSpawn", true);
+
+            newBoom.setData('XPos', x);
+            newBoom.setData('YPos', y);
+            newBoom.setData('Index', newBoomIndex);
+            newBoom.on('animationcomplete', () => {
+                newBoom.anims.play("BoomLoop", true);
+            })
+
+
+            //console.log(newBoom);
+            booms.push(newBoom);
+            //}
+        }
 
     }
     updateCamera(delta) {
@@ -591,29 +741,29 @@ class MainGame extends Phaser.Scene {
         cameraZoom = ((defaultCameraZoom / Math.exp(speed / 25)) - cameraZoom) * 1 * delta / 1000 + cameraZoom;
         this.cam.setZoom(cameraZoom);
 
-        this.UIContainer.setScale(1/cameraZoom,1/cameraZoom);
+        this.UIContainer.setScale(1 / cameraZoom, 1 / cameraZoom);
         preCamPos.copy(CameraPos);
     }
     updatePlayerUI(delta) {
-        let posTempX = playerPosture==0?0:(playerPosture==1?-0.35:0.35);
-        let posTempY = playerPosture==0?0:(playerPosture==1?0.35:-0.35);
+        let posTempX = playerPosture == 0 ? 0 : (playerPosture == 1 ? -0.35 : 0.35);
+        let posTempY = playerPosture == 0 ? 0 : (playerPosture == 1 ? 0.35 : -0.35);
         //posTempY = 0;
         //posTempX = 0;
-        let newPos = new Phaser.Math.Vector2(playerPos.x+posTempX,playerPos.y+posTempY);
+        let newPos = new Phaser.Math.Vector2(playerPos.x + posTempX, playerPos.y + posTempY);
         PlayerUIPos.lerp(newPos, 30 * delta / 1000);
         let p = this.CalPos(PlayerUIPos);
         this.PlayerUI.x = p.x;
         this.PlayerUI.y = p.y;
 
-        this.PlayerUI.setScale(1/cameraZoom,1/cameraZoom);
+        this.PlayerUI.setScale(1 / cameraZoom, 1 / cameraZoom);
     }
     updatePlayer() {
         let newPos = this.CalPos(playerPos);
         this.player.x = newPos.x;
         this.player.y = newPos.y;
         this.player.setDepth(20 - playerPos.x - playerPos.y);
-        this.UIContainer.setDepth(50-playerPos.x-playerPos.y);
-        this.PlayerUI.setDepth(40-playerPos.x-playerPos.y);
+        this.UIContainer.setDepth(50 - playerPos.x - playerPos.y);
+        this.PlayerUI.setDepth(40 - playerPos.x - playerPos.y);
         //console.log(this.UIContainer);
     }
     deleteFarBlocks() {
@@ -628,8 +778,31 @@ class MainGame extends Phaser.Scene {
             }
             i++;
         }
+        i = 0;
+        //console.log(booms);
+        while (i < booms.length) {
+            let x = booms[i].getData('XPos');
+            let y = booms[i].getData('YPos');
+            if (Math.abs(x - playerPos.x) > newBlockSpawnRange || Math.abs(y - playerPos.y) > newBlockSpawnRange) {
+                booms[i].destroy();
+                booms.splice(i, 1);
+                //console.log('delete Boom');
+            }
+            i++;
+        }
     }
-
+    makeTempAni(x,y,aniIndex,scale,depth){
+        var temp = this.add.sprite(w / 2, h / 2, aniIndex);
+        var newTempPos = this.CalPos(new Phaser.Math.Vector2(x, y));
+        temp.x = newTempPos.x;
+        temp.y = newTempPos.y;
+        temp.setScale(scale);
+        temp.setDepth(depth);
+        temp.anims.play(aniIndex, true);
+        temp.on('animationcomplete', () => {
+            temp.destroy();
+        })
+    }
     updateBlocks() {
         let i = 0;
         while (i < blocks.length) {
@@ -639,12 +812,13 @@ class MainGame extends Phaser.Scene {
             if (this.Coincide(x, y, Index)) {
                 blocks[i].destroy();
                 blocks.splice(i, 1);
-                Score += [10, 10, 25][Index];
+                Score += [10, 5, 25][Index];
+                this.updateScore();
                 power = (1 - (Math.atan(Math.pow(gameTime / 60, 1.5)) / (0.5 * Math.PI))) * (30 - 2.5) + 2.5;
                 currentDiff = power;
 
-                var powerMax = this.add.sprite(32*1.5,h*0.05, 'PowerMax');
-                powerMax.setScale(1.5,1.5);
+                var powerMax = this.add.sprite(32 * 1.5, h * 0.05, 'PowerMax');
+                powerMax.setScale(1.5, 1.5);
                 this.PlayerUI.add(powerMax);
                 powerMax.anims.play('PowerMax', true);
                 powerMax.on('animationcomplete', () => {
@@ -661,9 +835,6 @@ class MainGame extends Phaser.Scene {
                     this.animateControl();
                     this.KeyMap.setFrame(1);
                 });
-                
-
-                this.ScoreText.text = Score;
                 //console.log(Score)
 
                 var newScore = this.add.sprite(w / 2, h / 2, ['HighScore', 'Low01Score', 'Low02Score'][playerPosture]);
@@ -683,21 +854,70 @@ class MainGame extends Phaser.Scene {
             i++;
         }
     }
+    updateBooms() {
+        let i = 0;
+        while (i < booms.length) {
+            let x = booms[i].getData('XPos');
+            let y = booms[i].getData('YPos');
+
+            if (this.clapsBoom(x, y, 0, playerPos.x, playerPos.y, playerPosture)) {
+                booms[i].destroy();
+                booms.splice(i, 1);
+                playerDying = true;
+
+                this.makeTempAni(x,y,'BoomEffect',3,19 - playerPos.x - playerPos.y);
+                this.makeTempAni(x,y,'BoomSpawnEffect',3,18 - playerPos.x - playerPos.y);
+
+
+                return;
+            }
+            i++;
+        }
+    }
+    makePlayerDie() {
+        let DieAnims = ['HighDie', 'Low01Die', 'Low02Die'];
+        this.player.anims.play(DieAnims[playerPosture], true);
+        this.PowerBar.visible = false;
+
+        /*var newDyingEffect = this.add.sprite(w / 2, h / 2, 'BoomSpawnEffect');
+        var newEffectPos = this.CalPos(playerPos);
+        newDyingEffect.x = newEffectPos.x;
+        newDyingEffect.y = newEffectPos.y;
+        newDyingEffect.setScale(2.5);
+        newDyingEffect.setDepth(-playerPos.x - playerPos.y);
+        newDyingEffect.anims.play('BoomSpawnEffect', true);
+        newDyingEffect.on('animationcomplete', () => {
+            newDyingEffect.destroy();
+        })*/
+
+        playerDied = true;
+    }
     update(time, delta) {
         gameTime = time / 1000;
         this.deleteFarBlocks();
         if (timeCount > 0) {
             timeCount -= delta / 1000;
+        } else {
+            if (playerDying && !playerDied) {
+                this.makePlayerDie();
+            }
         }
         if (power > 0) {
             power -= delta / 1000;
         } else {
             power = 0;
+            playerDying = true;
             //console.log('Die!');
         }
-        this.PowerBar.setTexture('Power',Math.min(Math.floor((1-power/currentDiff)*64),63));
+        this.PowerBar.setTexture('Power', Math.min(Math.floor((1 - power / currentDiff) * 64), 63));
         this.updateCamera(delta);
         this.updatePlayerUI(delta)
-        this.spawnNewBlock();
+        if (blockSpawnTimeCount > 0) {
+            blockSpawnTimeCount -= delta / 1000;
+        } else {
+            blockSpawnTimeCount = blockSpawnTime;
+            this.spawnNewBlock();
+        }
+
     }
 }

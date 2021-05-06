@@ -1,7 +1,7 @@
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.ENVELOP,
+        mode: Phaser.Scale.FIT,
         parent: 'app',
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: this.innerWidth,
