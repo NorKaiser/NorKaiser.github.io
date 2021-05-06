@@ -1,7 +1,7 @@
 const FPS = 45;
 const inputDelay = 0;
-const w = 540;
-const h = 960;
+const w = this.innerWidth;
+const h = this.innerHeight;
 const mapSize = 13;
 const defaultCameraZoom = 1;
 const controlPanle = 0.65;
@@ -36,6 +36,34 @@ const BlockPostures = [[[0, 0]], [[0, -1], [0, 0], [0, 1]], [[-1, 0], [0, 0], [1
 class MainGame extends Phaser.Scene {
     key = 'MainGame';
     preload() {
+
+        /*let direction = 'Ver'
+        function getDirection() {
+            switch (window.orientation) {
+                case 0:
+                case 180:
+                    direction = 'Ver'
+                    break;
+                case -90:
+                case 90:
+                    direction = 'Hor'
+                    break;
+            }
+        }
+        Phaser.World.prototype.displayObjectUpdateTransform = function () {
+            if (direction == 'Ver') {
+                game.scale.setGameSize(height, width)
+                this.x = game.camera.y + game.width;
+                this.y = -game.camera.x;
+                this.rotation = Phaser.Math.degToRad(Phaser.Math.wrapAngle(90));
+            } else {
+                game.scale.setGameSize(width, height)
+                this.x = -game.camera.x;
+                this.y = -game.camera.y;
+                this.rotation = 0;
+            }
+            PIXI.DisplayObject.prototype.updateTransform.call(this);
+        }*/
 
         this.cameras.main.backgroundColor.setTo(50, 50, 50);
         var progressBar = this.add.graphics();
@@ -237,7 +265,7 @@ class MainGame extends Phaser.Scene {
         this.anims.create({
             key: 'PowerMax',
             frames: this.anims.generateFrameNumbers('PowerMax', { start: 0, end: 31 }),
-            frameRate: 25,
+            frameRate: 60,
             //repeat: -1
         })
 

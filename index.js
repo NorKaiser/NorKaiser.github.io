@@ -1,11 +1,11 @@
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.ENVELOP,
         parent: 'app',
         autoCenter: Phaser.Scale.CENTER_BOTH,
-        width: 540,
-        height: 960,
+        width: this.innerWidth,
+        height: this.innerHeight,
     },
     pixelArt: true,
     scene: [MainGame]
