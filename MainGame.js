@@ -16,32 +16,89 @@ var preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var cameraZoom = defaultCameraZoom;
 let playerPosture = 0;
-const aniFrame = 4;
-let aniTime = aniFrame / FPS;
+const aniFrame = 10;
+const aniTime = aniFrame / FPS;
 var timeCount = 0;
 var nextInput = -1;
 var blocks = [];
 var booms = [];
+var x2s = 0;
 var Score = 0;
-var power = 10;
-var currentDiff = 10;
-var gameTime;
-let blockSpawnTime = 0.02;
+var displayScore = 0;
+var power = 30;
+var currentDiff = 30;
+var gameTime = 0;
+var blockSpawnTime = 0.02;
 var blockSpawnTimeCount = 0;
+var X2SpawnTime = 20;
+var X2SpawnTimeCount = 0;
 var playerDying = false;
 var playerDied = false;
+var howToDie = 0;
 
-const maxBoomNum = 20;
+const maxBoomNum = 25;
 const maxBlockNum = 120;
+const maxX2Num = 1;
 const newBlockSpawnRange = 20;
 const PlayerRange = 3;
 
 const BlockIndexs = ['FlipC', 'FlipB', 'FlipA'];
 const BlockPostures = [[[0, 0]], [[0, -1], [0, 0], [0, 1]], [[-1, 0], [0, 0], [1, 0]]];
 
+const X2SpawnIndexs = ['FlipX2ASpawn', 'FlipX2BSpawn'];
+const X2LoopIndexs = ['FlipX2ALoop', 'FlipX2BLoop'];
+const X2Postures = [[[0, 1], [0, 0], [0, -1]], [[1, 0], [0, 0], [-1, 0]]];
+
 
 class MainGame extends Phaser.Scene {
     key = 'MainGame';
+    resetGame() {
+        /*this.scene.start('MainGame')
+        this.scene.stop();*/
+        playerPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        CameraPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        cameraZoom = defaultCameraZoom;
+        playerPosture = 0;
+        timeCount = 0;
+        nextInput = -1;
+
+        let i=0;
+        while(i<blocks.length){
+            blocks[i].destroy();
+            blocks.splice(i, 1);
+            i++;
+        }
+        i=0;
+        while(i<booms.length){
+            booms[i].destroy();
+            booms.splice(i, 1);
+            i++;
+        }
+
+
+        //blocks = [];
+        //booms = [];
+
+
+        x2s = 0;
+        Score = 0;
+        displayScore = 0;
+        power = 30;
+        currentDiff = 30;
+        gameTime = 0;
+        blockSpawnTimeCount = 0;
+        X2SpawnTimeCount = 0;
+        playerDying = false;
+        playerDied = false;
+        howToDie = 0;
+
+        this.PowerBar.visible = true;
+        this.player.anims.play('HighIdel', true);
+        this.updatePlayer();
+        this.updateScore(1);
+    }
     preload() {
 
         /*let direction = 'Ver'
@@ -73,8 +130,8 @@ class MainGame extends Phaser.Scene {
         }*/
 
         this.cameras.main.backgroundColor.setTo(50, 50, 50);
-        var progressBar = this.add.graphics();
-        var progressBox = this.add.graphics();
+        let progressBar = this.add.graphics();
+        let progressBox = this.add.graphics();
         progressBar.setScrollFactor(0, 0);
         progressBox.setScrollFactor(0, 0);
         progressBox.fillStyle(0x222222, 0.8);
@@ -115,6 +172,8 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('FlipA', 'img/FlipA.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('FlipB', 'img/FlipB.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('FlipC', 'img/FlipC.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('FlipX2A', 'img/FlipX2A.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('FlipX2B', 'img/FlipX2B.png', { frameWidth: 256, frameHeight: 256 });
 
         this.load.spritesheet('Low01Score', 'img/Low01Score.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('Low02Score', 'img/Low01Score.png', { frameWidth: 256, frameHeight: 256 });
@@ -130,9 +189,13 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('BoomSpawnEffect', 'img/BoomSpawn.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('BoomEffect', 'img/BoomEffect.png', { frameWidth: 256, frameHeight: 256 });
 
-        this.load.spritesheet('HighDie', 'img/HighDie.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low01Die', 'img/Low01Die.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low02Die', 'img/Low02Die.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('HighDieA', 'img/HighDieA.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low01DieA', 'img/Low01DieA.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low02DieA', 'img/Low02DieA.png', { frameWidth: 256, frameHeight: 256 });
+
+        this.load.spritesheet('HighDieB', 'img/HighDieB.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low01DieB', 'img/Low01DieB.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low02DieB', 'img/Low02DieB.png', { frameWidth: 256, frameHeight: 256 });
 
 
         this.load.image('MainUI', 'img/MainUI.png');
@@ -154,25 +217,25 @@ class MainGame extends Phaser.Scene {
         })
         this.anims.create({
             key: 'HighLeft',
-            frames: this.anims.generateFrameNumbers('HighLeft', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('HighLeft', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighRight',
-            frames: this.anims.generateFrameNumbers('HighRight', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('HighRight', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighUp',
-            frames: this.anims.generateFrameNumbers('HighUp', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('HighUp', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighDown',
-            frames: this.anims.generateFrameNumbers('HighDown', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('HighDown', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
@@ -185,25 +248,25 @@ class MainGame extends Phaser.Scene {
         })
         this.anims.create({
             key: 'Low01Left',
-            frames: this.anims.generateFrameNumbers('Low01Left', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low01Left', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Right',
-            frames: this.anims.generateFrameNumbers('Low01Right', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low01Right', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Up',
-            frames: this.anims.generateFrameNumbers('Low01Up', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low01Up', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Down',
-            frames: this.anims.generateFrameNumbers('Low01Down', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low01Down', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
@@ -216,25 +279,25 @@ class MainGame extends Phaser.Scene {
         })
         this.anims.create({
             key: 'Low02Left',
-            frames: this.anims.generateFrameNumbers('Low02Left', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low02Left', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Right',
-            frames: this.anims.generateFrameNumbers('Low02Right', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low02Right', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Up',
-            frames: this.anims.generateFrameNumbers('Low02Up', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low02Up', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Down',
-            frames: this.anims.generateFrameNumbers('Low02Down', { start: 0, end: aniFrame-1 }),
+            frames: this.anims.generateFrameNumbers('Low02Down', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
@@ -257,6 +320,30 @@ class MainGame extends Phaser.Scene {
             frames: this.anims.generateFrameNumbers('FlipC', { start: 0, end: 9 }),
             frameRate: 25,
             //repeat: -1
+        })
+        this.anims.create({
+            key: 'FlipX2ASpawn',
+            frames: this.anims.generateFrameNumbers('FlipX2A', { start: 0, end: 9 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'FlipX2ALoop',
+            frames: this.anims.generateFrameNumbers('FlipX2A', { start: 10, end: 19 }),
+            frameRate: 25,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'FlipX2BSpawn',
+            frames: this.anims.generateFrameNumbers('FlipX2B', { start: 0, end: 9 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'FlipX2BLoop',
+            frames: this.anims.generateFrameNumbers('FlipX2B', { start: 10, end: 19 }),
+            frameRate: 25,
+            repeat: -1
         })
 
 
@@ -316,20 +403,39 @@ class MainGame extends Phaser.Scene {
 
 
         this.anims.create({
-            key: 'HighDie',
-            frames: this.anims.generateFrameNumbers('HighDie', { start: 0, end: 31 }),
+            key: 'HighDieA',
+            frames: this.anims.generateFrameNumbers('HighDieA', { start: 0, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
         this.anims.create({
-            key: 'Low01Die',
-            frames: this.anims.generateFrameNumbers('Low01Die', { start: 0, end: 31 }),
+            key: 'Low01DieA',
+            frames: this.anims.generateFrameNumbers('Low01DieA', { start: 0, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
         this.anims.create({
-            key: 'Low02Die',
-            frames: this.anims.generateFrameNumbers('Low02Die', { start: 0, end: 31 }),
+            key: 'Low02DieA',
+            frames: this.anims.generateFrameNumbers('Low02DieA', { start: 0, end: 31 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+
+        this.anims.create({
+            key: 'HighDieB',
+            frames: this.anims.generateFrameNumbers('HighDieB', { start: 0, end: 31 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'Low01DieB',
+            frames: this.anims.generateFrameNumbers('Low01DieB', { start: 0, end: 31 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'Low02DieB',
+            frames: this.anims.generateFrameNumbers('Low02DieB', { start: 0, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
@@ -429,8 +535,9 @@ class MainGame extends Phaser.Scene {
                 return;
         }
     }
-    updateScore() {
-        let ScoreString = Score.toString();
+    updateScore(delta) {
+        displayScore = (Score - displayScore) * 10 * delta / 1000 + displayScore;
+        let ScoreString = Math.ceil(displayScore).toString();
         let Num = [];
         for (let i = 0; i != ScoreString.length; i++) {
             Num[i] = Number(ScoreString[i]);
@@ -452,7 +559,7 @@ class MainGame extends Phaser.Scene {
         this.PowerBar = this.add.image(0, h * 0.05, 'Power', 0);
         this.PowerBar.setScale(1.5, 1.5);
 
-        this.MainUI = this.add.image(128 - w / 2, 128 - h / 2, 'MainUI');
+        this.MainUI = this.add.image(256 - w / 2, 64 - h / 2, 'MainUI');
 
         this.KeyMap = this.add.image(0, h * (1 - (1 - controlPanle) / 2) - h / 2, 'KeyMap', 0);
         this.KeyMap.setScale(w * 0.75 / 128, w * 0.75 / 128);
@@ -460,10 +567,10 @@ class MainGame extends Phaser.Scene {
 
         this.ScoreMap = [];
         let scale = [1.2, 1, 0.8, 0.75, 0.72, 0.70, 0.685, 0.67];
-        let nowpos = 25;
+        let nowpos = -35;
         for (let i = 0; i != 8; i++) {
-            nowpos += 50 * scale[i];
-            this.ScoreMap[i] = this.add.image(nowpos - w / 2, 65 - h / 2, 'Number', 0);
+            nowpos += 75 * scale[i];
+            this.ScoreMap[i] = this.add.image(nowpos - w / 2, 60 - 50 * (1 - scale[i]) - h / 2, 'Number', 0);
             this.ScoreMap[i].setScale(scale[i], scale[i]);
         }
 
@@ -484,10 +591,14 @@ class MainGame extends Phaser.Scene {
         this.player.setScale(2.5);
         this.player.anims.play('HighIdel', true);
         this.updatePlayer();
-        this.updateScore();
+        this.updateScore(1);
         this.player.on('animationcomplete', () => {
             if (playerDying) {
-                return;
+                if (playerDying && playerDied) {
+                    this.resetGame();
+                } else {
+                    return;
+                }
             }
             this.updateBlocks();
             this.updateBooms();
@@ -639,6 +750,56 @@ class MainGame extends Phaser.Scene {
         }
         return false;
     }
+    contain(x, y) {
+        if (x.length == 0) {
+            return false;
+        }
+        for (let i = 0; i < x.length; i++) {
+            if (y == x[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    clapsX2(x, y, chosen, newX2Index) {
+        var myPostures = X2Postures[newX2Index];
+        let roundBoomPos = [[[0, 2], [1, 2], [1, 1], [1, 0], [1, -1], [1, -2], [0, -2], [-1, -2], [-1, -1], [-1, 0], [-1, 1], [-1, 2]],
+        [[2, 0], [2, 1], [1, 1], [0, 1], [-1, 1], [-2, 1], [-2, 0], [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1]]];
+        let roundBoom = [];
+
+        for (let i = 0; i != chosen.length; i++) {
+            roundBoom.push(roundBoomPos[newX2Index][chosen[i]]);
+        }
+
+        let allPosture = myPostures.slice().concat(roundBoom);
+
+        for (let i = 0; i != blocks.length; i++) {
+            var thisPostures = BlockPostures[blocks[i].getData('Postures')];
+            var thisX = blocks[i].getData('XPos');
+            var thisY = blocks[i].getData('YPos');
+            for (let j = 0; j != allPosture.length; j++) {
+                for (let k = 0; k != thisPostures.length; k++) {
+                    if (thisX + thisPostures[k][0] == x + allPosture[j][0] && thisY + thisPostures[k][1] == y + allPosture[j][1]) {
+                        return true;
+                    }
+                }
+            }
+        }
+        for (let i = 0; i != booms.length; i++) {
+            var thisX = booms[i].getData('XPos');
+            var thisY = booms[i].getData('YPos');
+            for (let j = 0; j != allPosture.length; j++) {
+                if (thisX == x + allPosture[j][0] && thisY == y + allPosture[j][1]) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
     Coincide(thisX, thisY, thisIndex) {
         var myPostures = BlockPostures[playerPosture];
         var x = playerPos.x;
@@ -666,7 +827,7 @@ class MainGame extends Phaser.Scene {
             } while (this.claps(x, y, newBlockIndex) || (Math.abs(x - playerPos.x) < PlayerRange && Math.abs(y - playerPos.y) < PlayerRange))
 
 
-            var newBlock = this.add.sprite(w / 2, h / 2, BlockIndexs[newBlockIndex]);
+            let newBlock = this.add.sprite(w / 2, h / 2, BlockIndexs[newBlockIndex]);
 
             let newPos = this.CalPos(new Phaser.Math.Vector2(x, y));
             newBlock.x = newPos.x;
@@ -679,6 +840,7 @@ class MainGame extends Phaser.Scene {
             newBlock.setData('XPos', x);
             newBlock.setData('YPos', y);
             newBlock.setData('Postures', newBlockIndex);
+            newBlock.setData('type', 0);
 
             blocks.push(newBlock);
             //}
@@ -696,11 +858,11 @@ class MainGame extends Phaser.Scene {
 
             let newPos = this.CalPos(new Phaser.Math.Vector2(x, y));
 
-            var newBoomEffect = this.add.sprite(w / 2, h / 2, "BoomSpawnEffect");
+            let newBoomEffect = this.add.sprite(w / 2, h / 2, "BoomSpawnEffect");
 
             newBoomEffect.x = newPos.x;
             newBoomEffect.y = newPos.y;
-            newBoomEffect.setDepth(- x - y);
+            newBoomEffect.setDepth(1 - x - y);
 
             newBoomEffect.setScale(1.25);
             newBoomEffect.anims.play("BoomSpawnEffect", true);
@@ -709,7 +871,7 @@ class MainGame extends Phaser.Scene {
                 newBoomEffect.destroy();
             })
 
-            var newBoom = this.add.sprite(w / 2, h / 2, "BoomSpawn");
+            let newBoom = this.add.sprite(w / 2, h / 2, "BoomSpawn");
 
 
             newBoom.x = newPos.x;
@@ -732,6 +894,95 @@ class MainGame extends Phaser.Scene {
             //}
         }
 
+    }
+    spawnNewX2() {
+        if (x2s < maxX2Num) {
+            //for (let i = blocks.length; i < maxBlockNum; i++) {
+            let x, y;
+            let newX2Index;
+            let roundBoomNum = 4;
+            let chosen = [];
+            do {
+                x = Phaser.Math.Between(playerPos.x - newBlockSpawnRange - 2, playerPos.x + newBlockSpawnRange - 2);
+                y = Phaser.Math.Between(playerPos.y - newBlockSpawnRange - 2, playerPos.y + newBlockSpawnRange - 2);
+                newX2Index = Phaser.Math.Between(0, 1);
+                chosen = [];
+                for (let i = 0; i != roundBoomNum; i++) {
+                    let boomIndex = Phaser.Math.Between(0, 11);
+                    while (this.contain(chosen, boomIndex)) {
+                        boomIndex = Phaser.Math.Between(0, 11);
+                    }
+                    chosen.push(boomIndex);
+                }
+            } while (this.clapsX2(x, y, chosen, newX2Index) || (Math.abs(x - playerPos.x) < PlayerRange + 2 && Math.abs(y - playerPos.y) < PlayerRange + 2))
+
+
+
+            let newX2 = this.add.sprite(w / 2, h / 2, X2SpawnIndexs[newX2Index]);
+            let newPos = this.CalPos(new Phaser.Math.Vector2(x, y));
+            newX2.x = newPos.x;
+            newX2.y = newPos.y;
+            newX2.setDepth(- x - y);
+            newX2.setScale(1.25);
+            newX2.anims.play(X2SpawnIndexs[newX2Index], true);
+            newX2.setData('XPos', x);
+            newX2.setData('YPos', y);
+            newX2.setData('Postures', newX2Index + 1);
+            newX2.setData('type', 1);
+            newX2.on('animationcomplete', () => {
+                newX2.anims.play(X2LoopIndexs[newX2Index], true);
+            })
+            x2s++;
+            blocks.push(newX2);
+
+            let roundBoomPos = [[[0, 2], [1, 2], [1, 1], [1, 0], [1, -1], [1, -2], [0, -2], [-1, -2], [-1, -1], [-1, 0], [-1, 1], [-1, 2]],
+            [[2, 0], [2, 1], [1, 1], [0, 1], [-1, 1], [-2, 1], [-2, 0], [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1]]];
+
+            let newboom = [];
+            for (let i = 0; i != chosen.length; i++) {
+                let boomPos = roundBoomPos[newX2Index][chosen[i]];
+
+                let boomX = boomPos[0] + x;
+                let boomY = boomPos[1] + y;
+
+                let newPos = this.CalPos(new Phaser.Math.Vector2(boomX, boomY));
+                let newBoomEffect = this.add.sprite(w / 2, h / 2, "BoomSpawnEffect");
+
+                newBoomEffect.x = newPos.x;
+                newBoomEffect.y = newPos.y;
+                newBoomEffect.setDepth(1 - boomX - boomY);
+
+                newBoomEffect.setScale(1.25);
+                newBoomEffect.anims.play("BoomSpawnEffect", true);
+
+                newBoomEffect.on('animationcomplete', () => {
+                    newBoomEffect.destroy();
+                })
+
+                newboom[i] = this.add.sprite(w / 2, h / 2, "BoomSpawn");
+
+
+                newboom[i].x = newPos.x;
+                newboom[i].y = newPos.y;
+                newboom[i].setDepth(- boomX - boomY);
+
+                newboom[i].setScale(1.25);
+                newboom[i].anims.play("BoomSpawn", true);
+
+                newboom[i].setData('XPos', boomX);
+                newboom[i].setData('YPos', boomY);
+                newboom[i].setData('Index', 0);
+                newboom[i].on('animationcomplete', () => {
+                    newboom[i].anims.play("BoomLoop", true);
+                })
+
+                //console.log(boomPos);
+                //console.log(newboom[i]);
+                //console.log(newBoom);
+                booms.push(newboom[i]);
+            }
+
+        }
     }
     updateCamera(delta) {
         CameraPos.lerp(playerPos, 1 * delta / 1000);
@@ -772,9 +1023,13 @@ class MainGame extends Phaser.Scene {
         while (i < blocks.length) {
             let x = blocks[i].getData('XPos');
             let y = blocks[i].getData('YPos');
+            let type = blocks[i].getData('type');
             if (Math.abs(x - playerPos.x) > newBlockSpawnRange || Math.abs(y - playerPos.y) > newBlockSpawnRange) {
                 blocks[i].destroy();
                 blocks.splice(i, 1);
+                if (type == 1) {
+                    x2s--;
+                }
                 //console.log('delete blocks');
             }
             i++;
@@ -792,8 +1047,8 @@ class MainGame extends Phaser.Scene {
             i++;
         }
     }
-    makeTempAni(x,y,aniIndex,scale,depth){
-        var temp = this.add.sprite(w / 2, h / 2, aniIndex);
+    makeTempAni(x, y, aniIndex, scale, depth) {
+        let temp = this.add.sprite(w / 2, h / 2, aniIndex);
         var newTempPos = this.CalPos(new Phaser.Math.Vector2(x, y));
         temp.x = newTempPos.x;
         temp.y = newTempPos.y;
@@ -810,15 +1065,23 @@ class MainGame extends Phaser.Scene {
             let x = blocks[i].getData('XPos');
             let y = blocks[i].getData('YPos');
             let Index = blocks[i].getData('Postures');
+            let type = blocks[i].getData('type');
             if (this.Coincide(x, y, Index)) {
+                let ScoreSize = 2.5;
                 blocks[i].destroy();
                 blocks.splice(i, 1);
-                Score += [10, 5, 25][Index];
-                this.updateScore();
+                if (type == 1) {
+                    Score *= 2;
+                    ScoreSize = 3;
+                    x2s--;
+                } else {
+                    Score += [10, 5, 25][Index];
+                }
+                //this.updateScore();
                 power = (1 - (Math.atan(Math.pow(gameTime / 60, 1.5)) / (0.5 * Math.PI))) * (30 - 2.5) + 2.5;
                 currentDiff = power;
 
-                var powerMax = this.add.sprite(32 * 1.5, h * 0.05, 'PowerMax');
+                let powerMax = this.add.sprite(32 * 1.5, h * 0.05, 'PowerMax');
                 powerMax.setScale(1.5, 1.5);
                 this.PlayerUI.add(powerMax);
                 powerMax.anims.play('PowerMax', true);
@@ -838,17 +1101,7 @@ class MainGame extends Phaser.Scene {
                 });
                 //console.log(Score)
 
-                var newScore = this.add.sprite(w / 2, h / 2, ['HighScore', 'Low01Score', 'Low02Score'][playerPosture]);
-                var newScorePos = this.CalPos(playerPos);
-                newScore.x = newScorePos.x;
-                newScore.y = newScorePos.y;
-                newScore.setScale(2.5);
-                newScore.setDepth(-playerPos.x - playerPos.y);
-                newScore.anims.play(['HighScore', 'Low01Score', 'Low02Score'][playerPosture], true);
-                newScore.on('animationcomplete', () => {
-                    newScore.destroy();
-                })
-
+                this.makeTempAni(playerPos.x, playerPos.y, ['HighScore', 'Low01Score', 'Low02Score'][playerPosture], ScoreSize, 1 - playerPos.x - playerPos.y);
 
                 return;
             }
@@ -857,6 +1110,7 @@ class MainGame extends Phaser.Scene {
     }
     updateBooms() {
         let i = 0;
+        let boomCount = 0;
         while (i < booms.length) {
             let x = booms[i].getData('XPos');
             let y = booms[i].getData('YPos');
@@ -865,19 +1119,29 @@ class MainGame extends Phaser.Scene {
                 booms[i].destroy();
                 booms.splice(i, 1);
                 playerDying = true;
+                howToDie = 0;
 
-                this.makeTempAni(x,y,'BoomEffect',3,19 - playerPos.x - playerPos.y);
-                this.makeTempAni(x,y,'BoomSpawnEffect',3,18 - playerPos.x - playerPos.y);
+                this.makeTempAni(x, y, 'BoomEffect', 3, 19 - playerPos.x - playerPos.y);
+                this.makeTempAni(x, y, 'BoomSpawnEffect', 3, 18 - playerPos.x - playerPos.y);
 
-
-                return;
+                if (boomCount < 3) {
+                    boomCount++;
+                } else {
+                    return;
+                }
             }
             i++;
         }
     }
     makePlayerDie() {
-        let DieAnims = ['HighDie', 'Low01Die', 'Low02Die'];
-        this.player.anims.play(DieAnims[playerPosture], true);
+        this.updatePlayer();
+        let DieAnimsA = ['HighDieA', 'Low01DieA', 'Low02DieA'];
+        let DieAnimsB = ['HighDieB', 'Low01DieB', 'Low02DieB'];
+        if (howToDie == 0) {
+            this.player.anims.play(DieAnimsA[playerPosture], true);
+        } else {
+            this.player.anims.play(DieAnimsB[playerPosture], true);
+        }
         this.PowerBar.visible = false;
 
         /*var newDyingEffect = this.add.sprite(w / 2, h / 2, 'BoomSpawnEffect');
@@ -894,7 +1158,8 @@ class MainGame extends Phaser.Scene {
         playerDied = true;
     }
     update(time, delta) {
-        gameTime = time / 1000;
+        gameTime += delta / 1000;
+        //console.log(gameTime);
         this.deleteFarBlocks();
         if (timeCount > 0) {
             timeCount -= delta / 1000;
@@ -908,6 +1173,7 @@ class MainGame extends Phaser.Scene {
         } else {
             power = 0;
             playerDying = true;
+            howToDie = 1;
             //console.log('Die!');
         }
         this.PowerBar.setTexture('Power', Math.min(Math.floor((1 - power / currentDiff) * 64), 63));
@@ -919,6 +1185,14 @@ class MainGame extends Phaser.Scene {
             blockSpawnTimeCount = blockSpawnTime;
             this.spawnNewBlock();
         }
+
+        if (X2SpawnTimeCount > 0) {
+            X2SpawnTimeCount -= delta / 1000;
+        } else {
+            X2SpawnTimeCount = X2SpawnTime;
+            this.spawnNewX2();
+        }
+        this.updateScore(delta);
 
     }
 }
