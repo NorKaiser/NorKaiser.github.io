@@ -16,7 +16,8 @@ var preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var cameraZoom = defaultCameraZoom;
 let playerPosture = 0;
-let aniTime = 10 / FPS;
+const aniFrame = 4;
+let aniTime = aniFrame / FPS;
 var timeCount = 0;
 var nextInput = -1;
 var blocks = [];
@@ -153,25 +154,25 @@ class MainGame extends Phaser.Scene {
         })
         this.anims.create({
             key: 'HighLeft',
-            frames: this.anims.generateFrameNumbers('HighLeft', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('HighLeft', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighRight',
-            frames: this.anims.generateFrameNumbers('HighRight', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('HighRight', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighUp',
-            frames: this.anims.generateFrameNumbers('HighUp', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('HighUp', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighDown',
-            frames: this.anims.generateFrameNumbers('HighDown', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('HighDown', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
@@ -184,25 +185,25 @@ class MainGame extends Phaser.Scene {
         })
         this.anims.create({
             key: 'Low01Left',
-            frames: this.anims.generateFrameNumbers('Low01Left', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low01Left', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Right',
-            frames: this.anims.generateFrameNumbers('Low01Right', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low01Right', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Up',
-            frames: this.anims.generateFrameNumbers('Low01Up', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low01Up', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Down',
-            frames: this.anims.generateFrameNumbers('Low01Down', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low01Down', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
@@ -215,25 +216,25 @@ class MainGame extends Phaser.Scene {
         })
         this.anims.create({
             key: 'Low02Left',
-            frames: this.anims.generateFrameNumbers('Low02Left', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low02Left', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Right',
-            frames: this.anims.generateFrameNumbers('Low02Right', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low02Right', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Up',
-            frames: this.anims.generateFrameNumbers('Low02Up', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low02Up', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Down',
-            frames: this.anims.generateFrameNumbers('Low02Down', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low02Down', { start: 0, end: aniFrame-1 }),
             frameRate: FPS,
             //repeat: -1
         })
