@@ -3,7 +3,7 @@ const inputDelay = 0;
 const w = this.innerWidth;
 const h = this.innerHeight;
 const mapSize = 13;
-const defaultCameraZoom = 0.9;
+const defaultCameraZoom = 0.9 * this.innerHeight / 1000;
 const controlPanle = 0.65;
 const controlMode = 1
 
@@ -18,7 +18,7 @@ var cameraZoom = defaultCameraZoom;
 let playerPosture = 0;
 const aniFrame = 10;
 const aniTime = aniFrame / FPS;
-var timeCount = 0;
+var timeCount = aniTime;
 var nextInput = -1;
 var blocks = [];
 var booms = [];
@@ -35,6 +35,10 @@ var X2SpawnTimeCount = 0;
 var playerDying = false;
 var playerDied = false;
 var howToDie = 0;
+var afterLife = 0;
+var realAfterLife = 0;
+var afterLifeHigh = 0;
+var afterLifeZero = 0;
 
 const maxBoomNum = 25;
 const maxBlockNum = 120;
@@ -49,56 +53,12 @@ const X2SpawnIndexs = ['FlipX2ASpawn', 'FlipX2BSpawn'];
 const X2LoopIndexs = ['FlipX2ALoop', 'FlipX2BLoop'];
 const X2Postures = [[[0, 1], [0, 0], [0, -1]], [[1, 0], [0, 0], [-1, 0]]];
 
-
+function Clamp(a, b, c) {
+    return a < b ? b : (a > c ? c : a);
+}
 class MainGame extends Phaser.Scene {
     key = 'MainGame';
-    resetGame() {
-        /*this.scene.start('MainGame')
-        this.scene.stop();*/
-        playerPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
-        CameraPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
-        preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
-        PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
-        cameraZoom = defaultCameraZoom;
-        playerPosture = 0;
-        timeCount = 0;
-        nextInput = -1;
 
-        let i=0;
-        while(i<blocks.length){
-            blocks[i].destroy();
-            blocks.splice(i, 1);
-            i++;
-        }
-        i=0;
-        while(i<booms.length){
-            booms[i].destroy();
-            booms.splice(i, 1);
-            i++;
-        }
-
-
-        //blocks = [];
-        //booms = [];
-
-
-        x2s = 0;
-        Score = 0;
-        displayScore = 0;
-        power = 30;
-        currentDiff = 30;
-        gameTime = 0;
-        blockSpawnTimeCount = 0;
-        X2SpawnTimeCount = 0;
-        playerDying = false;
-        playerDied = false;
-        howToDie = 0;
-
-        this.PowerBar.visible = true;
-        this.player.anims.play('HighIdel', true);
-        this.updatePlayer();
-        this.updateScore(1);
-    }
     preload() {
 
         /*let direction = 'Ver'
@@ -151,6 +111,8 @@ class MainGame extends Phaser.Scene {
 
         this.cam = this.cameras.main;
 
+        this.load.spritesheet('Born', 'img/Born.png', { frameWidth: 256, frameHeight: 256 });
+
         this.load.spritesheet('HighIdel', 'img/HighIdel.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('HighLeft', 'img/HighLeft.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('HighRight', 'img/HighRight.png', { frameWidth: 256, frameHeight: 256 });
@@ -198,6 +160,16 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('Low02DieB', 'img/Low02DieB.png', { frameWidth: 256, frameHeight: 256 });
 
 
+        this.load.spritesheet('HighAfterLife', 'img/HighAfterLife.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low01AfterLife', 'img/Low01AfterLife.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low02AfterLife', 'img/Low02AfterLife.png', { frameWidth: 256, frameHeight: 256 });
+
+
+        this.load.image('BG', 'img/BG.png');
+        this.load.image('StarSky', 'img/StarSky.png');
+        this.load.image('BGBlack', 'img/BGBlack.png');
+
+
         this.load.image('MainUI', 'img/MainUI.png');
 
     }
@@ -209,6 +181,15 @@ class MainGame extends Phaser.Scene {
     }
 
     makeAni() {
+
+        this.anims.create({
+            key: 'Born',
+            frames: this.anims.generateFrameNumbers('Born', { start: 0, end: 9 }),
+            frameRate: FPS,
+            //repeat: -1
+        })
+
+
         this.anims.create({
             key: 'HighIdel',
             frames: this.anims.generateFrameNumbers('HighIdel', { start: 0, end: 9 }),
@@ -404,44 +385,125 @@ class MainGame extends Phaser.Scene {
 
         this.anims.create({
             key: 'HighDieA',
-            frames: this.anims.generateFrameNumbers('HighDieA', { start: 0, end: 31 }),
+            frames: this.anims.generateFrameNumbers('HighDieA', { start: 2, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01DieA',
-            frames: this.anims.generateFrameNumbers('Low01DieA', { start: 0, end: 31 }),
+            frames: this.anims.generateFrameNumbers('Low01DieA', { start: 1, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02DieA',
-            frames: this.anims.generateFrameNumbers('Low02DieA', { start: 0, end: 31 }),
+            frames: this.anims.generateFrameNumbers('Low02DieA', { start: 1, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
 
         this.anims.create({
             key: 'HighDieB',
-            frames: this.anims.generateFrameNumbers('HighDieB', { start: 0, end: 31 }),
+            frames: this.anims.generateFrameNumbers('HighDieB', { start: 2, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01DieB',
-            frames: this.anims.generateFrameNumbers('Low01DieB', { start: 0, end: 31 }),
+            frames: this.anims.generateFrameNumbers('Low01DieB', { start: 1, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02DieB',
-            frames: this.anims.generateFrameNumbers('Low02DieB', { start: 0, end: 31 }),
+            frames: this.anims.generateFrameNumbers('Low02DieB', { start: 1, end: 31 }),
             frameRate: 25,
             //repeat: -1
         })
 
-    }
+        this.anims.create({
+            key: 'HighAfterLife',
+            frames: this.anims.generateFrameNumbers('HighAfterLife', { start: 0, end: 31 }),
+            frameRate: 25,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'Low01AfterLife',
+            frames: this.anims.generateFrameNumbers('Low01AfterLife', { start: 0, end: 31 }),
+            frameRate: 25,
+            repeat: -1
+        })
+        this.anims.create({
+            key: 'Low02AfterLife',
+            frames: this.anims.generateFrameNumbers('Low02AfterLife', { start: 0, end: 31 }),
+            frameRate: 25,
+            repeat: -1
+        })
 
+    }
+    resetGame() {
+        /*this.scene.start('MainGame')
+        this.scene.stop();*/
+        playerPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        playerPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        CameraPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
+        cameraZoom = defaultCameraZoom;
+        playerPosture = 0;
+        timeCount = aniTime;
+        nextInput = -1;
+        afterLife = 0;
+        realAfterLife = 0;
+        afterLifeHigh = 0;
+        afterLifeZero = 0;
+
+        this.MainUI.y = 64 - h / 2;
+        this.KeyMap.y = h * (1 - (1 - controlPanle) / 2) - h / 2;
+        let scale = [1.2, 1, 0.8, 0.75, 0.72, 0.70, 0.685, 0.67];
+        for (let i = 0; i != 8; i++) {
+            this.ScoreMap[i].y = 60 - 50 * (1 - scale[i]) - h / 2;
+        }
+
+        this.playerAfterLife.alpha = 0;
+        this.BGBlack.alpha = 1;
+        this.StarSky.alpha = 0;
+
+        let i = 0;
+        while (i < blocks.length) {
+            blocks[i].destroy();
+            blocks.splice(i, 1);
+            i++;
+        }
+        i = 0;
+        while (i < booms.length) {
+            booms[i].destroy();
+            booms.splice(i, 1);
+            i++;
+        }
+
+
+        //blocks = [];
+        //booms = [];
+
+
+        x2s = 0;
+        Score = 0;
+        displayScore = 0;
+        power = 30;
+        currentDiff = 30;
+        gameTime = 0;
+        blockSpawnTimeCount = 0;
+        X2SpawnTimeCount = 0;
+        playerDying = false;
+        playerDied = false;
+        howToDie = 0;
+
+        this.PowerBar.visible = true;
+        this.player.anims.play('Born', true);
+        this.updatePlayer();
+        this.updateScore(1);
+    }
     animateControl() {
         if (playerDying)
             return;
@@ -553,8 +615,19 @@ class MainGame extends Phaser.Scene {
     }
     create() {
         this.cam.setZoom(1.3);
-        this.cam.backgroundColor.setTo(50, 50, 50);
+        //this.cam.backgroundColor.setTo(50, 50, 50);
+        this.BG = this.add.image(w / 2, h / 2, 'BG');
+        this.BG.setScale(w / 16, h / 256);
+        this.BG.setScrollFactor(0, 0);
 
+        this.StarSky = this.add.image(w / 2, h / 2, 'StarSky');
+        this.StarSky.setScale(w / 16, h / 256);
+        this.StarSky.setScrollFactor(0, 0);
+        this.StarSky.alpha = 0;
+
+        this.BGBlack = this.add.image(w / 2, h / 2, 'BGBlack');
+        this.BGBlack.setScale(w / 16, h / 256);
+        this.BGBlack.setScrollFactor(0, 0);
 
         this.PowerBar = this.add.image(0, h * 0.05, 'Power', 0);
         this.PowerBar.setScale(1.5, 1.5);
@@ -562,7 +635,8 @@ class MainGame extends Phaser.Scene {
         this.MainUI = this.add.image(256 - w / 2, 64 - h / 2, 'MainUI');
 
         this.KeyMap = this.add.image(0, h * (1 - (1 - controlPanle) / 2) - h / 2, 'KeyMap', 0);
-        this.KeyMap.setScale(w * 0.75 / 128, w * 0.75 / 128);
+        let KeyMapSize = Math.min(w * 0.8 / 128, h * 0.5 / 128);
+        this.KeyMap.setScale(KeyMapSize, KeyMapSize);
 
 
         this.ScoreMap = [];
@@ -574,9 +648,14 @@ class MainGame extends Phaser.Scene {
             this.ScoreMap[i].setScale(scale[i], scale[i]);
         }
 
+
         this.UIContainer = this.add.container(w / 2, h / 2, [this.MainUI, this.KeyMap].concat(this.ScoreMap));
         this.UIContainer.setScrollFactor(0, 0);
         this.UIContainer.setDepth(50 - playerPos.x - playerPos.x);
+
+
+
+
 
         this.PlayerUI = this.add.container(0, 0, [this.PowerBar]);
         this.PlayerUI.setDepth(40 - playerPos.x - playerPos.x);
@@ -589,13 +668,20 @@ class MainGame extends Phaser.Scene {
         this.makeAni();
         this.player = this.add.sprite(w / 2, h / 2, 'HighIdel')
         this.player.setScale(2.5);
-        this.player.anims.play('HighIdel', true);
+        this.player.anims.play('Born', true);
+
+        this.playerAfterLife = this.add.sprite(w / 2, h / 2, 'HighAfterLife')
+        this.playerAfterLife.setScale(2.5);
+        this.playerAfterLife.alpha = 0;
+        //this.playerAfterLife.anims.play('HighAfterLife', true);
+        //console.log(this.player.anims);
         this.updatePlayer();
         this.updateScore(1);
         this.player.on('animationcomplete', () => {
             if (playerDying) {
                 if (playerDying && playerDied) {
-                    this.resetGame();
+                    //this.resetGame();
+                    return;
                 } else {
                     return;
                 }
@@ -656,6 +742,10 @@ class MainGame extends Phaser.Scene {
         this.input.mouse.disableContextMenu();
         this.input.on('pointerdown', (pointer) => {
             if ((pointer.leftButtonDown() || pointer.rightButtonDown())) {
+                if(playerDying){
+                    this.resetGame();
+                    return;
+                }
                 let xFactor = pointer.x / w;
                 let yFactor = (h - pointer.y) / (h * (1 - controlPanle));
                 let pos;
@@ -987,13 +1077,24 @@ class MainGame extends Phaser.Scene {
     updateCamera(delta) {
         CameraPos.lerp(playerPos, 1 * delta / 1000);
         let c = this.CalPos(CameraPos);
-        this.cam.centerOn(c.x, c.y);
+        this.cam.centerOn(c.x, c.y - realAfterLife);
         //console.log(CameraPos.x);
         var speed = CameraPos.distance(preCamPos) * 1000 / delta;
-        cameraZoom = ((defaultCameraZoom / Math.exp(speed / 25)) - cameraZoom) * 1 * delta / 1000 + cameraZoom;
+        cameraZoom = ((defaultCameraZoom / Math.exp(speed / 25)) + Clamp(realAfterLife / 200, 0, 1) * 0.15 - cameraZoom) * 1 * delta / 1000 + cameraZoom;
         this.cam.setZoom(cameraZoom);
 
         this.UIContainer.setScale(1 / cameraZoom, 1 / cameraZoom);
+
+        this.BG.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
+        this.BG.setDepth(-100 - playerPos.x - playerPos.y);
+
+
+        this.BGBlack.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
+        this.BGBlack.setDepth(19 - playerPos.x - playerPos.y);
+
+        this.StarSky.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
+        this.StarSky.setDepth(18 - playerPos.x - playerPos.y);
+
         preCamPos.copy(CameraPos);
     }
     updatePlayerUI(delta) {
@@ -1015,6 +1116,7 @@ class MainGame extends Phaser.Scene {
         this.player.y = newPos.y;
         this.player.setDepth(20 - playerPos.x - playerPos.y);
         this.UIContainer.setDepth(50 - playerPos.x - playerPos.y);
+        this.BG.setDepth(-5 - playerPos.x - playerPos.y);
         this.PlayerUI.setDepth(40 - playerPos.x - playerPos.y);
         //console.log(this.UIContainer);
     }
@@ -1137,12 +1239,19 @@ class MainGame extends Phaser.Scene {
         this.updatePlayer();
         let DieAnimsA = ['HighDieA', 'Low01DieA', 'Low02DieA'];
         let DieAnimsB = ['HighDieB', 'Low01DieB', 'Low02DieB'];
+        let AfterLifeAnims = ['HighAfterLife', 'Low01AfterLife', 'Low02AfterLife'];
         if (howToDie == 0) {
             this.player.anims.play(DieAnimsA[playerPosture], true);
         } else {
             this.player.anims.play(DieAnimsB[playerPosture], true);
         }
         this.PowerBar.visible = false;
+
+        this.playerAfterLife.x = this.player.x;
+        this.playerAfterLife.y = this.player.y;
+        this.playerAfterLife.depth = this.player.depth + 1;
+        afterLifeZero = this.player.y;
+        this.playerAfterLife.anims.play(AfterLifeAnims[playerPosture], true);
 
         /*var newDyingEffect = this.add.sprite(w / 2, h / 2, 'BoomSpawnEffect');
         var newEffectPos = this.CalPos(playerPos);
@@ -1158,6 +1267,9 @@ class MainGame extends Phaser.Scene {
         playerDied = true;
     }
     update(time, delta) {
+        realAfterLife = (afterLife - realAfterLife) * 50 / delta / 1000 + realAfterLife;
+        //realAfterLife = afterLife
+
         gameTime += delta / 1000;
         //console.log(gameTime);
         this.deleteFarBlocks();
@@ -1167,6 +1279,21 @@ class MainGame extends Phaser.Scene {
             if (playerDying && !playerDied) {
                 this.makePlayerDie();
             }
+        }
+        if (playerDying) {
+            afterLife += 150 * delta / 1000;
+
+            this.MainUI.y = 64 - h / 2 - realAfterLife;
+            this.KeyMap.y = h * (1 - (1 - controlPanle) / 2) - h / 2 + realAfterLife * 4;
+            let scale = [1.2, 1, 0.8, 0.75, 0.72, 0.70, 0.685, 0.67];
+            for (let i = 0; i != 8; i++) {
+                this.ScoreMap[i].y = 60 - 50 * (1 - scale[i]) - h / 2 - realAfterLife * Math.pow(0.9, 7 - i) * 0.9;
+            }
+
+            this.playerAfterLife.alpha = Clamp(realAfterLife / 200, 0, 1);
+            this.BGBlack.alpha = 1 - Clamp(realAfterLife / 600, 0, 1);
+            this.playerAfterLife.y = afterLifeZero - realAfterLife - (1 - Math.cos(Clamp(realAfterLife / 800, 0, 1) * Math.PI)) * 0.5 * (0.5 * h - 256);
+            this.StarSky.alpha = Clamp((realAfterLife - 1000) / 500, 0, 1);
         }
         if (power > 0) {
             power -= delta / 1000;
