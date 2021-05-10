@@ -553,7 +553,7 @@ class MainGame extends Phaser.Scene {
         this.BGBlack.alpha = 1;
         this.StarSky.alpha = 0;
 
-        this.BG.setTint(lerpColor(0, 1, BGcolors));
+        //this.BG.setTint(lerpColor(0, 1, BGcolors));
         this.BGGroundA.alpha = 0.15;
         this.BGGroundB.alpha = 0.2;
         this.BGGroundC.alpha = 0.25;
