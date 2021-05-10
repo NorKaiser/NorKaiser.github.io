@@ -7,8 +7,8 @@ const defaultCameraZoom = 0.9 * this.innerHeight / 1000;
 const controlPanle = 0.65;
 const controlMode = 1
 const startDiff = 60;
-const endDiff = 4;
-const diffTimeScale = 120;
+const endDiff = 3;
+const diffTimeScale = 100;
 const lookFreq = 0.01;
 
 let keyboard;
@@ -18,7 +18,8 @@ var playerPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var CameraPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
 var PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
-var cameraZoom = defaultCameraZoom;
+var cameraZoom = defaultCameraZoom / 1.5;
+
 let playerPosture = 0;
 const aniFrame = 10;
 const aniTime = aniFrame / FPS;
@@ -47,11 +48,22 @@ var afterLifeZero = 0;
 var lookcount = 0;
 var combo = 1;
 var comboTimeCount = 0;
+var playerColor = [255, 201, 107];
+var playerRealColor = [255, 201, 107];
+var endMove = false;
 
-const comboTime = 3;
-const maxBoomNum = 25;
-const maxBlockNum = 120;
-const maxX2Num = 1;
+const startMoveSpeed = [6, 4, 2];
+const endMoveSpeed = [600, 200, 100];
+var BGMoveSpeed = [6, 4, 2];
+var BGMoveRealSpeed = [6, 4, 2];
+var BGMove = [[0, 0], [0, 0], [0, 0]];
+
+
+const BGcolors = [[67, 107, 135], [102, 67, 135], [135, 76, 67]];
+const comboTime = 2.5;
+var maxBoomNum = 25;
+var maxBlockNum = 120;
+var maxX2Num = 1;
 const newBlockSpawnRange = 20;
 const PlayerRange = 3;
 
@@ -65,7 +77,25 @@ const X2Postures = [[[0, 1], [0, 0], [0, -1]], [[1, 0], [0, 0], [-1, 0]]];
 function Clamp(a, b, c) {
     return a < b ? b : (a > c ? c : a);
 }
-
+function getColor(r, g, b) {
+    return (Math.floor(r) * 256 + Math.floor(g)) * 256 + Math.floor(b);
+}
+function lerpColor(t, length, colors) {
+    let clampt = Clamp(t, 0, length) / length;
+    let n = Math.floor(clampt * colors.length);
+    n = Clamp(n, 0, colors.length - 1);
+    let nextn = Clamp(n + 1, 0, colors.length - 1);
+    let nt = clampt * colors.length - n;
+    //console.log(colors[n][0],colors[nextn][0],nt);
+    let newColor = ColorLerp(colors[n], colors[nextn], nt);
+    return getColor(newColor[0], newColor[1], newColor[2]);
+}
+function ColorLerp(a, b, t) {
+    let newR = Lerp(a[0], b[0], t);
+    let newG = Lerp(a[1], b[1], t);
+    let newB = Lerp(a[2], b[2], t);
+    return [newR, newG, newB];
+}
 function Lerp(a, b, c) {
     return (b - a) * c + a;
 }
@@ -98,23 +128,23 @@ class MainGame extends Phaser.Scene {
 
         this.load.spritesheet('Born', 'img/Born.png', { frameWidth: 256, frameHeight: 256 });
 
-        this.load.spritesheet('HighIdel', 'img/HighIdel.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('HighLeft', 'img/HighLeft.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('HighMove', 'img/HighMove.png', { frameWidth: 256, frameHeight: 256 });
+        /*this.load.spritesheet('HighLeft', 'img/HighLeft.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('HighRight', 'img/HighRight.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('HighUp', 'img/HighUp.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('HighDown', 'img/HighDown.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('HighDown', 'img/HighDown.png', { frameWidth: 256, frameHeight: 256 });*/
 
-        this.load.spritesheet('Low01Idel', 'img/Low01Idel.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low01Left', 'img/Low01Left.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low01Move', 'img/Low01Move.png', { frameWidth: 256, frameHeight: 256 });
+        /*this.load.spritesheet('Low01Left', 'img/Low01Left.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('Low01Right', 'img/Low01Right.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('Low01Up', 'img/Low01Up.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low01Down', 'img/Low01Down.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low01Down', 'img/Low01Down.png', { frameWidth: 256, frameHeight: 256 });*/
 
-        this.load.spritesheet('Low02Idel', 'img/Low02Idel.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low02Left', 'img/Low02Left.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low02Move', 'img/Low02Move.png', { frameWidth: 256, frameHeight: 256 });
+        /*this.load.spritesheet('Low02Left', 'img/Low02Left.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('Low02Right', 'img/Low02Right.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('Low02Up', 'img/Low02Up.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low02Down', 'img/Low02Down.png', { frameWidth: 256, frameHeight: 256 });
+        this.load.spritesheet('Low02Down', 'img/Low02Down.png', { frameWidth: 256, frameHeight: 256 });*/
 
         this.load.spritesheet('FlipA', 'img/FlipA.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('FlipB', 'img/FlipB.png', { frameWidth: 256, frameHeight: 256 });
@@ -144,9 +174,9 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('Low01DieB', 'img/Low01DieB.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('Low02DieB', 'img/Low02DieB.png', { frameWidth: 256, frameHeight: 256 });
 
-        this.load.spritesheet('HighIdelLook', 'img/HighIdelLook.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low01IdelLook', 'img/Low01IdelLook.png', { frameWidth: 256, frameHeight: 256 });
-        this.load.spritesheet('Low02IdelLook', 'img/Low02IdelLook.png', { frameWidth: 256, frameHeight: 256 });
+        //this.load.spritesheet('HighIdelLook', 'img/HighIdelLook.png', { frameWidth: 256, frameHeight: 256 });
+        //this.load.spritesheet('Low01IdelLook', 'img/Low01IdelLook.png', { frameWidth: 256, frameHeight: 256 });
+        //this.load.spritesheet('Low02IdelLook', 'img/Low02IdelLook.png', { frameWidth: 256, frameHeight: 256 });
 
 
         this.load.spritesheet('HighAfterLife', 'img/HighAfterLife.png', { frameWidth: 256, frameHeight: 256 });
@@ -167,12 +197,38 @@ class MainGame extends Phaser.Scene {
 
         this.load.image('MainUI', 'img/MainUI.png');
 
+
+        this.load.audio('Footsteps_1', 'aud/Footsteps_1.mp3');
+        this.load.audio('Footsteps_2', 'aud/Footsteps_2.mp3');
+        this.load.audio('Footsteps_3', 'aud/Footsteps_3.mp3');
+        this.load.audio('Footsteps_4', 'aud/Footsteps_4.mp3');
+        this.load.audio('Footsteps_5', 'aud/Footsteps_5.mp3');
+
+        this.load.audio('MagicExplosion_1', 'aud/MagicExplosion_1.mp3');
+        this.load.audio('MagicExplosion_2', 'aud/MagicExplosion_2.mp3');
+        this.load.audio('MagicExplosion_3', 'aud/MagicExplosion_3.mp3');
+
+        this.load.audio('X2Effect_1', 'aud/X2Effect_1.mp3');
+        this.load.audio('X2Effect_2', 'aud/X2Effect_2.mp3');
+
+        
+        this.load.audio('Boom_1', 'aud/Boom_1.mp3');
+        this.load.audio('Boom_2', 'aud/Boom_2.mp3');
+
     }
 
     CalPos(Pos) {
         let x = Pos.x * xVector.x + Pos.y * yVector.x + w / 2;
         let y = Pos.x * xVector.y + Pos.y * yVector.y + h / 2;
         return new Phaser.Math.Vector2(x, y);
+    }
+    CalVec(inx, iny) {
+        let x = inx * xVector.x + iny * yVector.x;
+        let y = inx * xVector.y + iny * yVector.y;
+        return new Phaser.Math.Vector2(x, y);
+    }
+    CurrentDiff() {
+        return (Math.atan(Math.pow(gameTime / diffTimeScale, 1.5)) / (0.5 * Math.PI));
     }
     makeAni() {
 
@@ -185,97 +241,117 @@ class MainGame extends Phaser.Scene {
 
 
         this.anims.create({
+            key: 'HighIdelLook',
+            frames: this.anims.generateFrameNumbers('HighMove', { start: 5 * aniFrame, end: 6 * aniFrame - 1 }),
+            frameRate: 12,
+            //repeat: -1
+        })
+        this.anims.create({
             key: 'HighIdel',
-            frames: this.anims.generateFrameNumbers('HighIdel', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('HighMove', { start: 4 * aniFrame, end: 5 * aniFrame - 1 }),
             frameRate: 12,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighLeft',
-            frames: this.anims.generateFrameNumbers('HighLeft', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('HighMove', { start: 2 * aniFrame, end: 3 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighRight',
-            frames: this.anims.generateFrameNumbers('HighRight', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('HighMove', { start: 3 * aniFrame, end: 4 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighUp',
-            frames: this.anims.generateFrameNumbers('HighUp', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('HighMove', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'HighDown',
-            frames: this.anims.generateFrameNumbers('HighDown', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('HighMove', { start: aniFrame, end: 2 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
 
         this.anims.create({
+            key: 'Low01IdelLook',
+            frames: this.anims.generateFrameNumbers('Low01Move', { start: 5 * aniFrame, end: 6 * aniFrame - 1 }),
+            frameRate: 12,
+            //repeat: -1
+        })
+        this.anims.create({
             key: 'Low01Idel',
-            frames: this.anims.generateFrameNumbers('Low01Idel', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low01Move', { start: 4 * aniFrame, end: 5 * aniFrame - 1 }),
             frameRate: 12,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Left',
-            frames: this.anims.generateFrameNumbers('Low01Left', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low01Move', { start: 2 * aniFrame, end: 3 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Right',
-            frames: this.anims.generateFrameNumbers('Low01Right', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low01Move', { start: 3 * aniFrame, end: 4 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Up',
-            frames: this.anims.generateFrameNumbers('Low01Up', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low01Move', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low01Down',
-            frames: this.anims.generateFrameNumbers('Low01Down', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low01Move', { start: aniFrame, end: 2 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
 
         this.anims.create({
+            key: 'Low02IdelLook',
+            frames: this.anims.generateFrameNumbers('Low02Move', { start: 5 * aniFrame, end: 6 * aniFrame - 1 }),
+            frameRate: 12,
+            //repeat: -1
+        })
+        this.anims.create({
             key: 'Low02Idel',
-            frames: this.anims.generateFrameNumbers('Low02Idel', { start: 0, end: 9 }),
+            frames: this.anims.generateFrameNumbers('Low02Move', { start: 4 * aniFrame, end: 5 * aniFrame - 1 }),
             frameRate: 12,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Left',
-            frames: this.anims.generateFrameNumbers('Low02Left', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low02Move', { start: 2 * aniFrame, end: 3 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Right',
-            frames: this.anims.generateFrameNumbers('Low02Right', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low02Move', { start: 3 * aniFrame, end: 4 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Up',
-            frames: this.anims.generateFrameNumbers('Low02Up', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low02Move', { start: 0, end: aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
         this.anims.create({
             key: 'Low02Down',
-            frames: this.anims.generateFrameNumbers('Low02Down', { start: 0, end: aniFrame - 1 }),
+            frames: this.anims.generateFrameNumbers('Low02Move', { start: aniFrame, end: 2 * aniFrame - 1 }),
             frameRate: FPS,
             //repeat: -1
         })
+
+
 
 
         this.anims.create({
@@ -415,24 +491,7 @@ class MainGame extends Phaser.Scene {
             //repeat: -1
         })
 
-        this.anims.create({
-            key: 'HighIdelLook',
-            frames: this.anims.generateFrameNumbers('HighIdelLook', { start: 0, end: 9 }),
-            frameRate: 12,
-            //repeat: -1
-        })
-        this.anims.create({
-            key: 'Low01IdelLook',
-            frames: this.anims.generateFrameNumbers('Low01IdelLook', { start: 0, end: 9 }),
-            frameRate: 12,
-            //repeat: -1
-        })
-        this.anims.create({
-            key: 'Low02IdelLook',
-            frames: this.anims.generateFrameNumbers('Low02IdelLook', { start: 0, end: 9 }),
-            frameRate: 12,
-            //repeat: -1
-        })
+
 
         this.anims.create({
             key: 'HighAfterLife',
@@ -463,7 +522,7 @@ class MainGame extends Phaser.Scene {
         CameraPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
         preCamPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
         PlayerUIPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
-        cameraZoom = defaultCameraZoom;
+        cameraZoom = defaultCameraZoom / 1.5;
         playerPosture = 0;
         timeCount = aniTime;
         nextInput = -1;
@@ -473,6 +532,15 @@ class MainGame extends Phaser.Scene {
         afterLifeHigh = 0;
         afterLifeZero = 0;
         lookcount = 0;
+        X2SpawnTime = 30;
+        maxBoomNum = 25;
+        maxX2Num = 1;
+        maxBlockNum = 120;
+        endMove = true;
+
+        BGMoveSpeed = [6, 4, 2];
+        BGMoveRealSpeed = [6, 4, 2];
+        //BGMove = [[0, 0], [0, 0], [0, 0]];
 
         this.MainUI.y = 64 - h / 2;
         this.KeyMap.y = h * (1 - (1 - controlPanle) / 2) - h / 2;
@@ -485,9 +553,10 @@ class MainGame extends Phaser.Scene {
         this.BGBlack.alpha = 1;
         this.StarSky.alpha = 0;
 
-        this.BGGroundA.alpha = 0.25 * 1 / 3;
-        this.BGGroundB.alpha = 0.25 * 2 / 3;
-        this.BGGroundC.alpha = 0.25 * 3 / 3;
+        this.BG.setTint(lerpColor(0, 1, BGcolors), 1);
+        this.BGGroundA.alpha = 0.15;
+        this.BGGroundB.alpha = 0.2;
+        this.BGGroundC.alpha = 0.25;
 
         let i = 0;
         while (i < blocks.length) {
@@ -526,11 +595,13 @@ class MainGame extends Phaser.Scene {
         this.updateScore(1);
     }
     animateControl() {
-        if (playerDying)
+        if (playerDying) {
             return;
+        }
         this.updatePlayer();
         switch (nextInput) {
             case 0:
+                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighUp', true);
@@ -552,6 +623,7 @@ class MainGame extends Phaser.Scene {
                 timeCount = aniTime;
                 break;
             case 1:
+                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighLeft', true);
@@ -573,6 +645,7 @@ class MainGame extends Phaser.Scene {
                 timeCount = aniTime;
                 break;
             case 2:
+                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighDown', true);
@@ -594,6 +667,7 @@ class MainGame extends Phaser.Scene {
                 timeCount = aniTime;
                 break;
             case 3:
+                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighRight', true);
@@ -683,9 +757,15 @@ class MainGame extends Phaser.Scene {
         }
     }
     create() {
-        this.cam.setZoom(1.3);
-        //this.cam.backgroundColor.setTo(50, 50, 50);
+        //this.cam.setZoom(1.3);
+
         this.BG = this.add.image(w / 2, h / 2, 'BG');
+        //this.BG.setTint(getColor(67, 107, 135));
+        //this.BG.setTint(getColor(102, 67, 135));
+        //this.BG.setTint(getColor(135, 76, 67));
+        //this.BG.setTint(getColor(135, 123, 67));
+        this.BG.setTint(lerpColor(0, 1, BGcolors), 1);
+
         this.BG.setScale(w / 16, h / 256);
         this.BG.setScrollFactor(0, 0);
 
@@ -708,19 +788,22 @@ class MainGame extends Phaser.Scene {
         this.KeyMap.setScale(KeyMapSize, KeyMapSize);
 
         this.BGGroundA = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundA');
-        this.BGGroundA.setScale(3, 3);
+        this.BGGroundA.setScale(4, 4);
         this.BGGroundA.setScrollFactor(0, 0);
-        this.BGGroundA.alpha = 0.25 * 1 / 3;
+        this.BGGroundA.alpha = 0.15;
+        this.BGGroundA.blendMode = 'ADD';
 
         this.BGGroundB = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundB');
-        this.BGGroundB.setScale(2, 2);
+        this.BGGroundB.setScale(3, 3);
         this.BGGroundB.setScrollFactor(0, 0);
-        this.BGGroundB.alpha = 0.25 * 2 / 3;
+        this.BGGroundB.alpha = 0.2;
+        this.BGGroundB.blendMode = 'ADD';
 
         this.BGGroundC = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundC');
-        this.BGGroundC.setScale(1, 1);
+        this.BGGroundC.setScale(2, 2);
         this.BGGroundC.setScrollFactor(0, 0);
-        this.BGGroundC.alpha = 0.25 * 3 / 3;
+        this.BGGroundC.alpha = 0.25;
+        this.BGGroundC.blendMode = 'ADD';
 
 
 
@@ -756,6 +839,8 @@ class MainGame extends Phaser.Scene {
         this.player = this.add.sprite(w / 2, h / 2, 'HighIdel')
         this.player.setScale(2.5);
         this.player.anims.play('Born', true);
+        this.player.setTint(getColor(playerRealColor[0], playerRealColor[1], playerRealColor[2]));
+        //this.player.tint.
 
         this.playerAfterLife = this.add.sprite(w / 2, h / 2, 'HighAfterLife')
         this.playerAfterLife.setScale(2.5);
@@ -785,6 +870,10 @@ class MainGame extends Phaser.Scene {
             }
             this.updateBlocks();
             this.updateBooms();
+            if (endMove) {
+                this.sound.play('Footsteps_' + Phaser.Math.Between(1, 5).toString());
+                endMove = false;
+            }
             if (nextInput != -1) {
                 this.animateControl();
                 return;
@@ -1154,22 +1243,49 @@ class MainGame extends Phaser.Scene {
         cameraZoom = ((defaultCameraZoom / Math.exp(speed / 25)) + Clamp(realAfterLife / 200, 0, 1) * 0.15 - cameraZoom) * 1 * delta / 1000 + cameraZoom;
         this.cam.setZoom(cameraZoom);
 
-        this.UIContainer.setScale(1 / cameraZoom, 1 / cameraZoom);
 
+        this.UIContainer.setScale(1 / cameraZoom, 1 / cameraZoom);
         this.BG.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
-        this.BG.setDepth(-100 - playerPos.x - playerPos.y);
+
+
+
+        if (!playerDying) {
+            BGMoveSpeed[0] = Lerp(startMoveSpeed[0], endMoveSpeed[0], this.CurrentDiff());
+            BGMoveSpeed[1] = Lerp(startMoveSpeed[1], endMoveSpeed[1], this.CurrentDiff());
+            BGMoveSpeed[2] = Lerp(startMoveSpeed[1], endMoveSpeed[2], this.CurrentDiff());
+        } else {
+            BGMoveSpeed[0] = 0;
+            BGMoveSpeed[1] = 0;
+            BGMoveSpeed[2] = 0;
+        }
+
+        BGMoveRealSpeed[0] = Lerp(BGMoveRealSpeed[0], BGMoveSpeed[0], 1 * delta / 1000);
+        BGMoveRealSpeed[1] = Lerp(BGMoveRealSpeed[1], BGMoveSpeed[1], 1 * delta / 1000);
+        BGMoveRealSpeed[2] = Lerp(BGMoveRealSpeed[2], BGMoveSpeed[2], 1 * delta / 1000);
+
+        let ASpeed = this.CalVec(BGMoveRealSpeed[0], 0);
+        BGMove[0][0] += ASpeed.x * delta / 1000;
+        BGMove[0][1] += ASpeed.y * delta / 1000;
+
+        let BSpeed = this.CalVec(BGMoveRealSpeed[1], 0);
+        BGMove[1][0] += BSpeed.x * delta / 1000;
+        BGMove[1][1] += BSpeed.y * delta / 1000;
+
+        let CSpeed = this.CalVec(BGMoveRealSpeed[2], 0);
+        BGMove[2][0] += CSpeed.x * delta / 1000;
+        BGMove[2][1] += CSpeed.y * delta / 1000;
 
         this.BGGroundA.setDepth(-90 - playerPos.x - playerPos.y);
-        this.BGGroundA.tilePositionX = c.x * 0.125 / 9;
-        this.BGGroundA.tilePositionY = (c.y - realAfterLife) * 0.125 / 9;
+        this.BGGroundA.tilePositionX = (c.x - BGMove[0][0]) * 0.125 / 16;
+        this.BGGroundA.tilePositionY = (c.y - BGMove[0][1] - realAfterLife) * 0.125 / 16;
 
         this.BGGroundB.setDepth(-91 - playerPos.x - playerPos.y);
-        this.BGGroundB.tilePositionX = c.x * 0.25 / 4;
-        this.BGGroundB.tilePositionY = (c.y - realAfterLife) * 0.25 / 4;
+        this.BGGroundB.tilePositionX = (c.x - BGMove[1][0]) * 0.25 / 9;
+        this.BGGroundB.tilePositionY = (c.y - BGMove[1][1] - realAfterLife) * 0.25 / 9;
 
         this.BGGroundC.setDepth(-92 - playerPos.x - playerPos.y);
-        this.BGGroundC.tilePositionX = c.x * 0.5 / 1;
-        this.BGGroundC.tilePositionY = (c.y - realAfterLife) * 0.5 / 1;
+        this.BGGroundC.tilePositionX = (c.x - BGMove[2][0]) * 0.5 / 4;
+        this.BGGroundC.tilePositionY = (c.y - BGMove[2][1] - realAfterLife) * 0.5 / 4;
 
         this.BGBlack.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
         this.BGBlack.setDepth(30 - playerPos.x - playerPos.y);
@@ -1288,13 +1404,19 @@ class MainGame extends Phaser.Scene {
                     ScoreSize = 3;
                     x2s--;
                     this.cam.shake(150, 0.03);
-                    this.makeInfoText(x + 3, y + 3, 2, 36 - playerPos.x - playerPos.y);
+                    this.makeInfoText(x + 3, y + 3, 15, 2, 36 - playerPos.x - playerPos.y);
+                    this.cam.flash(50, 255, 220, 80);
+                    playerRealColor = [255, 255, 255];
+                    this.sound.play('X2Effect_' + Phaser.Math.Between(1, 2).toString());
+
                 } else {
                     Score += [10, 5, 25][Index] * combo;
                     this.cam.shake(150, [0.005, 0.0025, 0.0125][Index] * combo);
                     this.makeInfoText(x + 3, y + 3, [1, 0, 2][Index] + (combo - 1) * 3, 1.5, 36 - playerPos.x - playerPos.y);
+                    playerRealColor = [255, 255, 255];
+                    this.sound.play('MagicExplosion_' + Phaser.Math.Between(1, 3).toString());
                 }
-                power = (1 - (Math.atan(Math.pow(gameTime / diffTimeScale, 1.5)) / (0.5 * Math.PI))) * (startDiff - endDiff) + endDiff;
+                power = Lerp(startDiff, endDiff, this.CurrentDiff());
                 currentDiff = power;
 
                 let powerMax = this.add.sprite(32 * 1.5, h * 0.05, 'PowerMax');
@@ -1343,14 +1465,17 @@ class MainGame extends Phaser.Scene {
                 this.cam.shake(150, 0.05);
                 this.makeTempAni(x, y, 'BoomEffect', 3, 19 - playerPos.x - playerPos.y);
                 this.makeTempAni(x, y, 'BoomSpawnEffect', 3, 18 - playerPos.x - playerPos.y);
-
                 if (boomCount < 3) {
                     boomCount++;
                 } else {
                     return;
                 }
+            }else{
+                i++;
             }
-            i++;
+        }
+        if(boomCount!=0){
+            this.sound.play('Boom_' + Phaser.Math.Between(1, 2).toString());
         }
     }
     makePlayerDie() {
@@ -1399,6 +1524,8 @@ class MainGame extends Phaser.Scene {
             }
         }
         if (playerDying) {
+            power = Lerp(power, currentDiff, 1 * delta / 1000);
+
             endTime = endTime < 0 ? time / 1000 : endTime;
             afterLife = (time / 1000 - endTime) * 200;
 
@@ -1415,9 +1542,9 @@ class MainGame extends Phaser.Scene {
             this.playerAfterLife.y = afterLifeZero - realAfterLife - playerAfterLifeFactor * (0.5 * h - 256) / this.cam.zoom;
             this.StarSky.alpha = Clamp((realAfterLife - 1000) / 500, 0, 1);
 
-            this.BGGroundA.alpha = Lerp(0.25, 1, Clamp((realAfterLife - 1000) / 500, 0, 1)) * 1 / 3;
-            this.BGGroundB.alpha = Lerp(0.25, 1, Clamp((realAfterLife - 1000) / 500, 0, 1)) * 2 / 3;
-            this.BGGroundC.alpha = Lerp(0.25, 1, Clamp((realAfterLife - 1000) / 500, 0, 1)) * 3 / 3;
+            this.BGGroundA.alpha = Lerp(0.15, 1, Clamp((realAfterLife - 1000) / 500, 0, 0.6));
+            this.BGGroundB.alpha = Lerp(0.2, 1, Clamp((realAfterLife - 1000) / 500, 0, 0.8));
+            this.BGGroundC.alpha = Lerp(0.25, 1, Clamp((realAfterLife - 1000) / 500, 0, 1));
         }
         if (power > 0) {
             power -= delta / 1000;
@@ -1428,6 +1555,9 @@ class MainGame extends Phaser.Scene {
             //console.log('Die!');
         }
         this.PowerBar.setTexture('Power', Math.min(Math.floor((1 - power / currentDiff) * 64), 63));
+        let nowColor = 1 - power / currentDiff;
+        nowColor = Lerp(this.CurrentDiff(), 1, nowColor);
+        this.BG.setTint(lerpColor(nowColor, 1, BGcolors));
         this.updateCamera(delta);
         this.updatePlayerUI(delta)
         if (blockSpawnTimeCount > 0) {
@@ -1450,8 +1580,12 @@ class MainGame extends Phaser.Scene {
             comboTimeCount = 0;
             combo = 1;
         }
-
+        playerRealColor = ColorLerp(playerRealColor, playerColor, 5 * delta / 1000);
+        this.player.setTint(getColor(playerRealColor[0], playerRealColor[1], playerRealColor[2]));
         this.updateScore(delta);
-
+        X2SpawnTime = Lerp(30, 5, this.CurrentDiff());
+        maxBoomNum = Lerp(25, 50, this.CurrentDiff());
+        maxX2Num = Lerp(1, 3, this.CurrentDiff());
+        maxBlockNum = Lerp(120, 100, this.CurrentDiff());
     }
 }
