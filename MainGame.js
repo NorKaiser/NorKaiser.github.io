@@ -766,7 +766,7 @@ class MainGame extends Phaser.Scene {
         //this.BG.setTint(getColor(102, 67, 135));
         //this.BG.setTint(getColor(135, 76, 67));
         //this.BG.setTint(getColor(135, 123, 67));
-        this.BG.setTint(lerpColor(0, 1, BGcolors));
+        //this.BG.setTint(lerpColor(0, 1, BGcolors));
 
         this.BG.setScale(w / 16, h / 256);
         this.BG.setScrollFactor(0, 0);
