@@ -7,7 +7,7 @@ const defaultCameraZoom = 0.9 * this.innerHeight / 1000;
 const controlPanle = 0.65;
 const controlMode = 1
 const startDiff = 60;
-const endDiff = 3;
+const endDiff = 1.5;
 const diffTimeScale = 100;
 const lookFreq = 0.01;
 
@@ -211,7 +211,7 @@ class MainGame extends Phaser.Scene {
         this.load.audio('X2Effect_1', 'aud/X2Effect_1.mp3');
         this.load.audio('X2Effect_2', 'aud/X2Effect_2.mp3');
 
-        
+
         this.load.audio('Boom_1', 'aud/Boom_1.mp3');
         this.load.audio('Boom_2', 'aud/Boom_2.mp3');
 
@@ -553,7 +553,7 @@ class MainGame extends Phaser.Scene {
         this.BGBlack.alpha = 1;
         this.StarSky.alpha = 0;
 
-        this.BG.setTint(lerpColor(0, 1, BGcolors), 1);
+        this.BG.setTint(lerpColor(0, 1, BGcolors));
         this.BGGroundA.alpha = 0.15;
         this.BGGroundB.alpha = 0.2;
         this.BGGroundC.alpha = 0.25;
@@ -599,9 +599,14 @@ class MainGame extends Phaser.Scene {
             return;
         }
         this.updatePlayer();
+        if (nextInput == -1) {
+            return;
+        }
+        endMove = true;
+        power = Clamp(power + aniTime, 0, currentDiff);
+        //console.log(power);
         switch (nextInput) {
             case 0:
-                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighUp', true);
@@ -623,7 +628,6 @@ class MainGame extends Phaser.Scene {
                 timeCount = aniTime;
                 break;
             case 1:
-                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighLeft', true);
@@ -645,7 +649,6 @@ class MainGame extends Phaser.Scene {
                 timeCount = aniTime;
                 break;
             case 2:
-                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighDown', true);
@@ -667,7 +670,6 @@ class MainGame extends Phaser.Scene {
                 timeCount = aniTime;
                 break;
             case 3:
-                endMove = true;
                 switch (playerPosture) {
                     case 0:
                         this.player.anims.play('HighRight', true);
@@ -764,7 +766,7 @@ class MainGame extends Phaser.Scene {
         //this.BG.setTint(getColor(102, 67, 135));
         //this.BG.setTint(getColor(135, 76, 67));
         //this.BG.setTint(getColor(135, 123, 67));
-        this.BG.setTint(lerpColor(0, 1, BGcolors), 1);
+        this.BG.setTint(lerpColor(0, 1, BGcolors));
 
         this.BG.setScale(w / 16, h / 256);
         this.BG.setScrollFactor(0, 0);
@@ -1470,11 +1472,11 @@ class MainGame extends Phaser.Scene {
                 } else {
                     return;
                 }
-            }else{
+            } else {
                 i++;
             }
         }
-        if(boomCount!=0){
+        if (boomCount != 0) {
             this.sound.play('Boom_' + Phaser.Math.Between(1, 2).toString());
         }
     }
