@@ -28,7 +28,7 @@ var nextInput = -1;
 var blocks = [];
 var booms = [];
 var x2s = 0;
-var Score = 7;
+var Score = 0;
 var displayScore = 0;
 var power = startDiff;
 var currentDiff = startDiff;
@@ -553,8 +553,7 @@ class MainGame extends Phaser.Scene {
         this.BGBlack.alpha = 1;
         this.StarSky.alpha = 0;
 
-        this.BG.setTint(getColor(67, 107, 135));
-        //this.BG.setTint(lerpColor(0, 1, BGcolors));
+        this.BG.setTint(lerpColor(0, 1, BGcolors));
         this.BGGroundA.alpha = 0.15;
         this.BGGroundB.alpha = 0.2;
         this.BGGroundC.alpha = 0.25;
@@ -767,7 +766,7 @@ class MainGame extends Phaser.Scene {
         //this.BG.setTint(getColor(102, 67, 135));
         //this.BG.setTint(getColor(135, 76, 67));
         //this.BG.setTint(getColor(135, 123, 67));
-        //this.BG.setTint(lerpColor(0, 1, BGcolors));
+        this.BG.setTint(lerpColor(0, 1, BGcolors));
 
         this.BG.setScale(w / 16, h / 256);
         this.BG.setScrollFactor(0, 0);
@@ -1560,7 +1559,7 @@ class MainGame extends Phaser.Scene {
         this.PowerBar.setTexture('Power', Math.min(Math.floor((1 - power / currentDiff) * 64), 63));
         let nowColor = 1 - power / currentDiff;
         nowColor = Lerp(this.CurrentDiff(), 1, nowColor);
-        //this.BG.setTint(lerpColor(nowColor, 1, BGcolors));
+        this.BG.setTint(lerpColor(nowColor, 1, BGcolors));
         this.updateCamera(delta);
         this.updatePlayerUI(delta)
         if (blockSpawnTimeCount > 0) {
