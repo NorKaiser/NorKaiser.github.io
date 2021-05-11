@@ -28,7 +28,7 @@ var nextInput = -1;
 var blocks = [];
 var booms = [];
 var x2s = 0;
-var Score = 6;
+var Score = 7;
 var displayScore = 0;
 var power = startDiff;
 var currentDiff = startDiff;
@@ -553,7 +553,7 @@ class MainGame extends Phaser.Scene {
         this.BGBlack.alpha = 1;
         this.StarSky.alpha = 0;
 
-        //this.BG.setTint(getColor(67, 107, 135));
+        this.BG.setTint(getColor(67, 107, 135));
         //this.BG.setTint(lerpColor(0, 1, BGcolors));
         this.BGGroundA.alpha = 0.15;
         this.BGGroundB.alpha = 0.2;
