@@ -1540,7 +1540,6 @@ class MainGame extends Phaser.Scene {
                 playerDying = true;
                 howToDie = 0;
                 this.cam.shake(150, 0.05);
-                shockwaves.push(new ShockWave(x, y, 10));
                 this.makeTempAni(x, y, 'BoomEffect', 3, 19 - playerPos.x - playerPos.y);
                 this.makeTempAni(x, y, 'BoomSpawnEffect', 3, 18 - playerPos.x - playerPos.y);
                 if (boomCount < 3) {
@@ -1553,6 +1552,7 @@ class MainGame extends Phaser.Scene {
             }
         }
         if (boomCount != 0) {
+            shockwaves.push(new ShockWave(playerPos.x, playerPos.y, 10));
             this.sound.play('Boom_' + Phaser.Math.Between(1, 2).toString());
         }
     }
