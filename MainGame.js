@@ -10,6 +10,7 @@ const startDiff = 60;
 const endDiff = 1.5;
 const diffTimeScale = 100;
 const lookFreq = 0.01;
+const X2Time = 10;
 
 let keyboard;
 const xVector = new Phaser.Math.Vector2(100 * Math.sqrt(2) / 8 * 2.5, -(100 * Math.sqrt(2) / 8 * 2.5) / Math.sqrt(3));
@@ -51,14 +52,18 @@ var comboTimeCount = 0;
 var playerColor = [255, 201, 107];
 var playerRealColor = [255, 201, 107];
 var endMove = false;
+var X2TimeCount = 0;
 
-const startMoveSpeed = [6, 4, 2];
-const endMoveSpeed = [600, 200, 100];
-var BGMoveSpeed = [6, 4, 2];
-var BGMoveRealSpeed = [6, 4, 2];
+const startMoveSpeed = [[6, 0], [4, 0], [2, 0]];
+const endMoveSpeed = [[350, 0], [300, 0], [250, 0]];
+var BGMoveSpeed = [[6, 0], [4, 0], [2, 0]];
+var BGMoveRealSpeed = [[6, 0], [4, 0], [2, 0]];
 var BGMove = [[0, 0], [0, 0], [0, 0]];
+const StartAlpha = [0.5, 0.4, 0.3];
+const EndAlpha = [0.75, 0.7, 0.65];
 
-
+var BGColor = [67, 107, 135];
+var BGRealColor = [67, 107, 135];
 const BGcolors = [[67, 107, 135], [102, 67, 135], [135, 76, 67]];
 const comboTime = 2.5;
 var maxBoomNum = 25;
@@ -88,7 +93,7 @@ function lerpColor(t, length, colors) {
     let nt = clampt * colors.length - n;
     //console.log(colors[n][0],colors[nextn][0],nt);
     let newColor = ColorLerp(colors[n], colors[nextn], nt);
-    return getColor(newColor[0], newColor[1], newColor[2]);
+    return newColor;
 }
 function ColorLerp(a, b, t) {
     let newR = Lerp(a[0], b[0], t);
@@ -98,6 +103,11 @@ function ColorLerp(a, b, t) {
 }
 function Lerp(a, b, c) {
     return (b - a) * c + a;
+}
+function LerpVec(a, b, c) {
+    let x = (b[0] - a[0]) * c + a[0];
+    let y = (b[1] - a[1]) * c + a[1];
+    return [x, y];
 }
 class MainGame extends Phaser.Scene {
     key = 'MainGame';
@@ -183,7 +193,7 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('Low01AfterLife', 'img/Low01AfterLife.png', { frameWidth: 256, frameHeight: 256 });
         this.load.spritesheet('Low02AfterLife', 'img/Low02AfterLife.png', { frameWidth: 256, frameHeight: 256 });
 
-        this.load.spritesheet('InfoText', 'img/InfoText.png', { frameWidth: 156, frameHeight: 64 });
+        this.load.spritesheet('InfoText', 'img/InfoText.png', { frameWidth: 200, frameHeight: 64 });
 
         this.load.image('Grid', 'img/Grid.png');
         this.load.image('GridMask', 'img/GridMask.png');
@@ -538,7 +548,8 @@ class MainGame extends Phaser.Scene {
         maxBlockNum = 120;
         endMove = true;
 
-        BGMoveSpeed = [6, 4, 2];
+
+        BGMoveSpeed = [[6, 0], [4, 0], [2, 0]];
         BGMoveRealSpeed = [6, 4, 2];
         //BGMove = [[0, 0], [0, 0], [0, 0]];
 
@@ -553,10 +564,13 @@ class MainGame extends Phaser.Scene {
         this.BGBlack.alpha = 1;
         this.StarSky.alpha = 0;
 
-        this.BG.setTint(lerpColor(0, 1, BGcolors));
-        this.BGGroundA.alpha = 0.15;
-        this.BGGroundB.alpha = 0.2;
-        this.BGGroundC.alpha = 0.25;
+        BGColor = lerpColor(0, 1, BGcolors);
+        BGRealColor = lerpColor(0, 1, BGcolors);
+        this.BG.setTint(getColor(BGRealColor[0], BGRealColor[1], BGRealColor[2]));
+
+        this.BGGroundA.alpha = StartAlpha[0];
+        this.BGGroundB.alpha = StartAlpha[1];
+        this.BGGroundC.alpha = StartAlpha[2];
 
         let i = 0;
         while (i < blocks.length) {
@@ -766,7 +780,7 @@ class MainGame extends Phaser.Scene {
         //this.BG.setTint(getColor(102, 67, 135));
         //this.BG.setTint(getColor(135, 76, 67));
         //this.BG.setTint(getColor(135, 123, 67));
-        this.BG.setTint(lerpColor(0, 1, BGcolors));
+        this.BG.setTint(getColor(BGRealColor[0], BGRealColor[1], BGRealColor[2]));
 
         this.BG.setScale(w / 16, h / 256);
         this.BG.setScrollFactor(0, 0);
@@ -792,19 +806,19 @@ class MainGame extends Phaser.Scene {
         this.BGGroundA = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundA');
         this.BGGroundA.setScale(4, 4);
         this.BGGroundA.setScrollFactor(0, 0);
-        this.BGGroundA.alpha = 0.15;
+        this.BGGroundA.alpha = StartAlpha[0];
         //this.BGGroundA.blendMode = 'ADD';
 
         this.BGGroundB = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundB');
         this.BGGroundB.setScale(3, 3);
         this.BGGroundB.setScrollFactor(0, 0);
-        this.BGGroundB.alpha = 0.2;
+        this.BGGroundB.alpha = StartAlpha[1];
         //this.BGGroundB.blendMode = 'ADD';
 
         this.BGGroundC = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundC');
         this.BGGroundC.setScale(2, 2);
         this.BGGroundC.setScrollFactor(0, 0);
-        this.BGGroundC.alpha = 0.25;
+        this.BGGroundC.alpha = StartAlpha[2];
         //this.BGGroundC.blendMode = 'ADD';
 
 
@@ -1250,30 +1264,34 @@ class MainGame extends Phaser.Scene {
         this.BG.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
 
 
-
-        if (!playerDying) {
-            BGMoveSpeed[0] = Lerp(startMoveSpeed[0], endMoveSpeed[0], this.CurrentDiff());
-            BGMoveSpeed[1] = Lerp(startMoveSpeed[1], endMoveSpeed[1], this.CurrentDiff());
-            BGMoveSpeed[2] = Lerp(startMoveSpeed[1], endMoveSpeed[2], this.CurrentDiff());
+        if (X2TimeCount > 0) {
+            BGMoveSpeed[0] = [200, 200];
+            BGMoveSpeed[1] = [200, 200];
+            BGMoveSpeed[2] = [200, 200];
+        }
+        else if (!playerDying) {
+            BGMoveSpeed[0] = LerpVec(startMoveSpeed[0], endMoveSpeed[0], this.CurrentDiff());
+            BGMoveSpeed[1] = LerpVec(startMoveSpeed[1], endMoveSpeed[1], this.CurrentDiff());
+            BGMoveSpeed[2] = LerpVec(startMoveSpeed[1], endMoveSpeed[2], this.CurrentDiff());
         } else {
-            BGMoveSpeed[0] = 0;
-            BGMoveSpeed[1] = 0;
-            BGMoveSpeed[2] = 0;
+            BGMoveSpeed[0] = [0, 0];
+            BGMoveSpeed[1] = [0, 0];
+            BGMoveSpeed[2] = [0, 0];
         }
 
-        BGMoveRealSpeed[0] = Lerp(BGMoveRealSpeed[0], BGMoveSpeed[0], 1 * delta / 1000);
-        BGMoveRealSpeed[1] = Lerp(BGMoveRealSpeed[1], BGMoveSpeed[1], 1 * delta / 1000);
-        BGMoveRealSpeed[2] = Lerp(BGMoveRealSpeed[2], BGMoveSpeed[2], 1 * delta / 1000);
+        BGMoveRealSpeed[0] = LerpVec(BGMoveRealSpeed[0], BGMoveSpeed[0], 1 * delta / 1000);
+        BGMoveRealSpeed[1] = LerpVec(BGMoveRealSpeed[1], BGMoveSpeed[1], 1 * delta / 1000);
+        BGMoveRealSpeed[2] = LerpVec(BGMoveRealSpeed[2], BGMoveSpeed[2], 1 * delta / 1000);
 
-        let ASpeed = this.CalVec(BGMoveRealSpeed[0], 0);
+        let ASpeed = this.CalVec(BGMoveRealSpeed[0][0], BGMoveRealSpeed[0][1]);
         BGMove[0][0] += ASpeed.x * delta / 1000;
         BGMove[0][1] += ASpeed.y * delta / 1000;
 
-        let BSpeed = this.CalVec(BGMoveRealSpeed[1], 0);
+        let BSpeed = this.CalVec(BGMoveRealSpeed[1][0], BGMoveRealSpeed[1][1]);
         BGMove[1][0] += BSpeed.x * delta / 1000;
         BGMove[1][1] += BSpeed.y * delta / 1000;
 
-        let CSpeed = this.CalVec(BGMoveRealSpeed[2], 0);
+        let CSpeed = this.CalVec(BGMoveRealSpeed[2][0], BGMoveRealSpeed[2][1]);
         BGMove[2][0] += CSpeed.x * delta / 1000;
         BGMove[2][1] += CSpeed.y * delta / 1000;
 
@@ -1402,21 +1420,27 @@ class MainGame extends Phaser.Scene {
                 blocks[i].destroy();
                 blocks.splice(i, 1);
                 if (type == 1) {
-                    Score *= 2;
+                    Score += 625;
+                    X2TimeCount = X2Time;
                     ScoreSize = 3;
                     x2s--;
                     this.cam.shake(150, 0.03);
                     this.makeInfoText(x + 3, y + 3, 15, 2, 36 - playerPos.x - playerPos.y);
                     this.cam.flash(50, 255, 220, 80);
                     playerRealColor = [255, 255, 255];
-                    this.sound.play('X2Effect_' + Phaser.Math.Between(1, 2).toString());
+                    this.sound.play('X2Effect_2');
 
                 } else {
-                    Score += [10, 5, 25][Index] * combo;
-                    this.cam.shake(150, [0.005, 0.0025, 0.0125][Index] * combo);
-                    this.makeInfoText(x + 3, y + 3, [1, 0, 2][Index] + (combo - 1) * 3, 1.5, 36 - playerPos.x - playerPos.y);
+                    Score += [10, 5, 25][Index] * combo * (X2TimeCount > 0 ? 5 : 1);
+                    this.cam.shake(150, [0.005, 0.0025, 0.0125][Index] * combo + (X2TimeCount > 0 ? 0.04 : 0));
+                    this.makeInfoText(x + 3, y + 3, [1, 0, 2][Index] + (combo - 1) * 3 + (X2TimeCount > 0 ? 16 : 0), 1.5, 36 - playerPos.x - playerPos.y);
                     playerRealColor = [255, 255, 255];
-                    this.sound.play('MagicExplosion_' + Phaser.Math.Between(1, 3).toString());
+                    if (X2TimeCount > 0) {
+                        ScoreSize = 3;
+                        this.sound.play('X2Effect_1');
+                    } else {
+                        this.sound.play('MagicExplosion_' + Phaser.Math.Between(1, 3).toString());
+                    }
                 }
                 power = Lerp(startDiff, endDiff, this.CurrentDiff());
                 currentDiff = power;
@@ -1544,9 +1568,9 @@ class MainGame extends Phaser.Scene {
             this.playerAfterLife.y = afterLifeZero - realAfterLife - playerAfterLifeFactor * (0.5 * h - 256) / this.cam.zoom;
             this.StarSky.alpha = Clamp((realAfterLife - 1000) / 500, 0, 1);
 
-            this.BGGroundA.alpha = Lerp(0.15, 1, Clamp((realAfterLife - 1000) / 500, 0, 0.6));
-            this.BGGroundB.alpha = Lerp(0.2, 1, Clamp((realAfterLife - 1000) / 500, 0, 0.8));
-            this.BGGroundC.alpha = Lerp(0.25, 1, Clamp((realAfterLife - 1000) / 500, 0, 1));
+            this.BGGroundA.alpha = Lerp(StartAlpha[0], EndAlpha[0], Clamp((realAfterLife - 1000) / 500, 0, 0.6));
+            this.BGGroundB.alpha = Lerp(StartAlpha[0], EndAlpha[1], Clamp((realAfterLife - 1000) / 500, 0, 0.8));
+            this.BGGroundC.alpha = Lerp(StartAlpha[0], EndAlpha[2], Clamp((realAfterLife - 1000) / 500, 0, 1));
         }
         if (power > 0) {
             power -= delta / 1000;
@@ -1557,9 +1581,18 @@ class MainGame extends Phaser.Scene {
             //console.log('Die!');
         }
         this.PowerBar.setTexture('Power', Math.min(Math.floor((1 - power / currentDiff) * 64), 63));
-        let nowColor = 1 - power / currentDiff;
-        nowColor = Lerp(this.CurrentDiff(), 1, nowColor);
-        this.BG.setTint(lerpColor(nowColor, 1, BGcolors));
+
+        if (X2TimeCount > 0 && !playerDying) {
+            BGColor = [255, 201, 107];
+        } else {
+            let nowColor = 1 - power / currentDiff;
+            nowColor = Lerp(this.CurrentDiff(), 1, nowColor);
+            BGColor = lerpColor(nowColor, 1, BGcolors);
+        }
+        BGRealColor = ColorLerp(BGRealColor, BGColor, 1 * delta / 1000);
+
+        this.BG.setTint(getColor(BGRealColor[0], BGRealColor[1], BGRealColor[2]));
+
         this.updateCamera(delta);
         this.updatePlayerUI(delta)
         if (blockSpawnTimeCount > 0) {
@@ -1575,6 +1608,11 @@ class MainGame extends Phaser.Scene {
             X2SpawnTimeCount = X2SpawnTime;
             this.spawnNewX2();
         }
+        if (X2TimeCount > 0) {
+            X2TimeCount -= delta / 1000;
+        } else {
+            X2TimeCount = 0;
+        }
 
         if (comboTimeCount > 0) {
             comboTimeCount -= delta / 1000;
@@ -1585,8 +1623,8 @@ class MainGame extends Phaser.Scene {
         playerRealColor = ColorLerp(playerRealColor, playerColor, 5 * delta / 1000);
         this.player.setTint(getColor(playerRealColor[0], playerRealColor[1], playerRealColor[2]));
         this.updateScore(delta);
-        X2SpawnTime = Lerp(30, 5, this.CurrentDiff());
-        maxBoomNum = Lerp(25, 50, this.CurrentDiff());
+        X2SpawnTime = Lerp(30, 15, this.CurrentDiff());
+        maxBoomNum = Lerp(25, 75, this.CurrentDiff());
         maxX2Num = Lerp(1, 3, this.CurrentDiff());
         maxBlockNum = Lerp(120, 100, this.CurrentDiff());
     }
