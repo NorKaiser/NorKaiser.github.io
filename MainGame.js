@@ -28,7 +28,7 @@ var nextInput = -1;
 var blocks = [];
 var booms = [];
 var x2s = 0;
-var Score = 5;
+var Score = 6;
 var displayScore = 0;
 var power = startDiff;
 var currentDiff = startDiff;
@@ -794,19 +794,19 @@ class MainGame extends Phaser.Scene {
         this.BGGroundA.setScale(4, 4);
         this.BGGroundA.setScrollFactor(0, 0);
         this.BGGroundA.alpha = 0.15;
-        this.BGGroundA.blendMode = 'ADD';
+        //this.BGGroundA.blendMode = 'ADD';
 
         this.BGGroundB = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundB');
         this.BGGroundB.setScale(3, 3);
         this.BGGroundB.setScrollFactor(0, 0);
         this.BGGroundB.alpha = 0.2;
-        this.BGGroundB.blendMode = 'ADD';
+        //this.BGGroundB.blendMode = 'ADD';
 
         this.BGGroundC = this.add.tileSprite(w / 2, h / 2, 2048, 2048, 'BGGroundC');
         this.BGGroundC.setScale(2, 2);
         this.BGGroundC.setScrollFactor(0, 0);
         this.BGGroundC.alpha = 0.25;
-        this.BGGroundC.blendMode = 'ADD';
+        //this.BGGroundC.blendMode = 'ADD';
 
 
 
