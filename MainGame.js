@@ -8,7 +8,7 @@ const controlPanle = 0.65;
 const controlMode = 1
 const startDiff = 60;
 const endDiff = 1.5;
-const diffTimeScale = 100;
+const diffTimeScale = 120;
 const lookFreq = 0.01;
 const X2Time = 10;
 
@@ -34,6 +34,7 @@ var displayScore = 0;
 var power = startDiff;
 var currentDiff = startDiff;
 var gameTime = 0;
+var gameStartTime = 0;
 var blockSpawnTime = 0.02;
 var blockSpawnTimeCount = 0;
 var X2SpawnTime = 30;
@@ -54,46 +55,6 @@ var playerRealColor = [255, 201, 107];
 var endMove = false;
 var X2TimeCount = 0;
 
-const shockWaveTime = 0.5;
-const shockWaveDis = 20;
-const jumpTime = 0.2;
-class ShockWave {
-    constructor(CenterX, CenterY, Power) {
-        this.CenterX = CenterX;
-        this.CenterY = CenterY;
-        this.Power = (Power+10)/10;
-        this.Life = shockWaveTime * Power;
-        this.Dis = shockWaveDis * Power;
-        this.JumpTime = jumpTime * this.Dis / this.Life;
-        this.age = 0;
-        this.myPower = Power;
-        this.myDis = 0;
-    }
-    update(delta) {
-        this.age += delta / 1000;
-        if (this.age > this.Life) {
-            return false;
-        }
-        let timefrac = Clamp(this.age / this.Life, 0, 1);
-        this.myPower = this.Power * (1.0 / ((timefrac + 1) * (timefrac + 1)) - 0.25) / 0.75;
-        this.myDis = (1 - ((timefrac - 1) * (timefrac - 1))) * this.Dis;
-        return true;
-    }
-    CalPower(x, y) {
-        let dis = Math.sqrt((x - this.CenterX) * (x - this.CenterX) + (y - this.CenterY) * (y - this.CenterY));
-        let jumpfrac = Clamp((this.myDis - dis) / this.JumpTime, -0.5, 0.5) + 0.5;
-        return this.myPower * (1 - (2 * jumpfrac - 1) * (2 * jumpfrac - 1));
-    }
-}
-var shockwaves = [];
-function CalPow(x, y) {
-    let pow = 0;
-    for (let i = 0; i != shockwaves.length; i++) {
-        pow += shockwaves[i].CalPower(x, y);
-    }
-    return pow * 20;
-}
-
 const startMoveSpeed = [[6, 0], [4, 0], [2, 0]];
 const endMoveSpeed = [[350, 0], [300, 0], [250, 0]];
 var BGMoveSpeed = [[6, 0], [4, 0], [2, 0]];
@@ -106,7 +67,7 @@ var BGColor = [67, 107, 135];
 var BGRealColor = [67, 107, 135];
 const BGcolors = [[67, 107, 135], [102, 67, 135], [135, 76, 67]];
 const comboTime = 2.5;
-var maxBoomNum = 50;
+var maxBoomNum = 35;
 var maxBlockNum = 240;
 var maxX2Num = 1;
 const newBlockSpawnRange = 28;
@@ -234,6 +195,8 @@ class MainGame extends Phaser.Scene {
         this.load.spritesheet('Low02AfterLife', 'img/Low02AfterLife.png', { frameWidth: 256, frameHeight: 256 });
 
         this.load.spritesheet('InfoText', 'img/InfoText.png', { frameWidth: 200, frameHeight: 64 });
+
+        this.load.spritesheet('EndingBoard', 'img/EndingBoard.png', { frameWidth: 112, frameHeight: 185 });
 
         this.load.image('Grid', 'img/Grid.png');
         this.load.image('GridMask', 'img/GridMask.png');
@@ -563,6 +526,14 @@ class MainGame extends Phaser.Scene {
         })
 
 
+        this.anims.create({
+            key: 'EndingBoard',
+            frames: this.anims.generateFrameNumbers('EndingBoard', { start: 0, end: 9 }),
+            frameRate: 12,
+            //repeat: -1
+        })
+
+
     }
     resetGame() {
         /*this.scene.start('MainGame')
@@ -583,14 +554,14 @@ class MainGame extends Phaser.Scene {
         afterLifeZero = 0;
         lookcount = 0;
         X2SpawnTime = 30;
-        maxBoomNum = 25;
+        maxBoomNum = 35;
         maxX2Num = 1;
-        maxBlockNum = 120;
+        maxBlockNum = 240;
         endMove = true;
 
 
         BGMoveSpeed = [[6, 0], [4, 0], [2, 0]];
-        BGMoveRealSpeed = [6, 4, 2];
+        BGMoveRealSpeed = [[6, 0], [4, 0], [2, 0]];
         //BGMove = [[0, 0], [0, 0], [0, 0]];
 
         this.MainUI.y = 64 - h / 2;
@@ -624,11 +595,6 @@ class MainGame extends Phaser.Scene {
             booms.splice(i, 1);
             //i++;
         }
-        i = 0;
-        while (i < shockwaves.length) {
-            shockwaves.splice(i, 1);
-            //i++;
-        }
 
         //blocks = [];
         //booms = [];
@@ -640,6 +606,7 @@ class MainGame extends Phaser.Scene {
         displayScore = 0;
         power = 30;
         currentDiff = 30;
+        gameStartTime = this.time.now/1000;
         gameTime = 0;
         blockSpawnTimeCount = 0;
         X2SpawnTimeCount = X2SpawnTime;
@@ -651,6 +618,8 @@ class MainGame extends Phaser.Scene {
         this.player.anims.play('Born', true);
         this.updatePlayer();
         this.updateScore(1);
+
+        this.cam.fadeIn(200);
     }
     animateControl() {
         if (playerDying) {
@@ -817,7 +786,6 @@ class MainGame extends Phaser.Scene {
         }
     }
     create() {
-        //this.cam.setZoom(1.3);
 
         this.BG = this.add.image(w / 2, h / 2, 'BG');
         //this.BG.setTint(getColor(67, 107, 135));
@@ -825,7 +793,6 @@ class MainGame extends Phaser.Scene {
         //this.BG.setTint(getColor(135, 76, 67));
         //this.BG.setTint(getColor(135, 123, 67));
         this.BG.setTint(getColor(BGRealColor[0], BGRealColor[1], BGRealColor[2]));
-
         this.BG.setScale(w / 16, h / 256);
         this.BG.setScrollFactor(0, 0);
 
@@ -865,6 +832,10 @@ class MainGame extends Phaser.Scene {
         this.BGGroundC.alpha = StartAlpha[2];
         //this.BGGroundC.blendMode = 'ADD';
 
+        this.EndingBoard = this.add.image(0, h*0.5-h * 0.35-64, 'EndingBoard');
+        this.EndingBoard.setScale(h * 0.7 / 185, h * 0.4 / 185);
+        this.EndingBoard.setScrollFactor(0, 0);
+        this.EndingBoard.visible = false;
 
 
         this.ScoreMap = [];
@@ -877,7 +848,7 @@ class MainGame extends Phaser.Scene {
         }
 
 
-        this.UIContainer = this.add.container(w / 2, h / 2, [this.MainUI, this.KeyMap].concat(this.ScoreMap));
+        this.UIContainer = this.add.container(w / 2, h / 2, [this.MainUI, this.KeyMap, this.EndingBoard].concat(this.ScoreMap));
         this.UIContainer.setScrollFactor(0, 0);
         this.UIContainer.setDepth(50 - playerPos.x - playerPos.x);
 
@@ -999,9 +970,13 @@ class MainGame extends Phaser.Scene {
 
         this.input.mouse.disableContextMenu();
         this.input.on('pointerdown', (pointer) => {
+            //console.log(BGMoveRealSpeed);
             if ((pointer.leftButtonDown() || pointer.rightButtonDown())) {
                 if (playerDying) {
-                    this.resetGame();
+                    this.cam.on('camerafadeoutcomplete', (camera) => {
+                        this.resetGame();
+                    });
+                    this.cam.fadeOut(1000);
                     return;
                 }
                 this.DoKeyBoard(pointer);
@@ -1145,7 +1120,6 @@ class MainGame extends Phaser.Scene {
             newBlock.setData('YPos', y);
             newBlock.setData('Postures', newBlockIndex);
             newBlock.setData('type', 0);
-            newBlock.setData('YReal', newPos.y);
 
             blocks.push(newBlock);
             //}
@@ -1189,7 +1163,6 @@ class MainGame extends Phaser.Scene {
             newBoom.setData('XPos', x);
             newBoom.setData('YPos', y);
             newBoom.setData('Index', newBoomIndex);
-            newBoom.setData('YReal', newPos.y);
             newBoom.on('animationcomplete', () => {
                 newBoom.anims.play("BoomLoop", true);
             })
@@ -1266,28 +1239,27 @@ class MainGame extends Phaser.Scene {
                     newBoomEffect.destroy();
                 })
 
-                newboom[i] = this.add.sprite(w / 2, h / 2, "BoomSpawn");
+                let newboom = this.add.sprite(w / 2, h / 2, "BoomSpawn");
 
 
-                newboom[i].x = newPos.x;
-                newboom[i].y = newPos.y;
-                newboom[i].setDepth(- boomX - boomY);
+                newboom.x = newPos.x;
+                newboom.y = newPos.y;
+                newboom.setDepth(- boomX - boomY);
 
-                newboom[i].setScale(1.25);
-                newboom[i].anims.play("BoomSpawn", true);
+                newboom.setScale(1.25);
+                newboom.anims.play("BoomSpawn", true);
 
-                newboom[i].setData('XPos', boomX);
-                newboom[i].setData('YPos', boomY);
-                newboom[i].setData('Index', 0);
-                newBoom[i].setData('YReal', newPos.y);
-                newboom[i].on('animationcomplete', () => {
-                    newboom[i].anims.play("BoomLoop", true);
+                newboom.setData('XPos', boomX);
+                newboom.setData('YPos', boomY);
+                newboom.setData('Index', 0);
+                newboom.on('animationcomplete', () => {
+                    newboom.anims.play("BoomLoop", true);
                 })
 
                 //console.log(boomPos);
                 //console.log(newboom[i]);
                 //console.log(newBoom);
-                booms.push(newboom[i]);
+                booms.push(newboom);
             }
 
         }
@@ -1476,20 +1448,17 @@ class MainGame extends Phaser.Scene {
                     this.makeInfoText(x + 3, y + 3, 15, 2, 80 - playerPos.x - playerPos.y);
                     this.cam.flash(50, 255, 220, 80);
                     playerRealColor = [255, 255, 255];
-                    this.sound.play('X2Effect_2');
-                    shockwaves.push(new ShockWave(x, y, 5));
+                    this.sound.play('X2Effect_' + Phaser.Math.Between(1, 2).toString());
 
                 } else {
                     Score += [10, 5, 25][Index] * combo * (X2TimeCount > 0 ? 5 : 1);
-                    this.cam.shake(150, [0.005, 0.0025, 0.0125][Index] * combo + (X2TimeCount > 0 ? 0.04 : 0));
+                    this.cam.shake(150, [0.005, 0.0025, 0.004][Index] * combo + (X2TimeCount > 0 ? 0.04 : 0));
                     this.makeInfoText(x + 3, y + 3, [1, 0, 2][Index] + (combo - 1) * 3 + (X2TimeCount > 0 ? 16 : 0), 1.5, 80 - playerPos.x - playerPos.y);
                     playerRealColor = [255, 255, 255];
                     if (X2TimeCount > 0) {
                         ScoreSize = 3;
-                        shockwaves.push(new ShockWave(x, y, [2, 1, 3][Index] * 1.5));
-                        this.sound.play('X2Effect_1');
+                        this.sound.play('X2Effect_' + Phaser.Math.Between(1, 2).toString());
                     } else {
-                        shockwaves.push(new ShockWave(x, y, [2, 1, 3][Index]));
                         this.sound.play('MagicExplosion_' + Phaser.Math.Between(1, 3).toString());
                     }
                 }
@@ -1552,7 +1521,7 @@ class MainGame extends Phaser.Scene {
             }
         }
         if (boomCount != 0) {
-            shockwaves.push(new ShockWave(playerPos.x, playerPos.y, 10));
+            this.cam.flash(250, 255, 255, 255);
             this.sound.play('Boom_' + Phaser.Math.Between(1, 2).toString());
         }
     }
@@ -1584,14 +1553,14 @@ class MainGame extends Phaser.Scene {
         newDyingEffect.on('animationcomplete', () => {
             newDyingEffect.destroy();
         })*/
-
+        endTime = gameTime;
         playerDied = true;
     }
     update(time, delta) {
         realAfterLife = (afterLife - realAfterLife) * 50 / delta / 1000 + realAfterLife;
         //realAfterLife = afterLife
 
-        gameTime += delta / 1000;
+        gameTime = time / 1000 - gameStartTime;
         //console.log(gameTime);
         this.deleteFarBlocks();
         if (timeCount > 0) {
@@ -1603,9 +1572,7 @@ class MainGame extends Phaser.Scene {
         }
         if (playerDying) {
             power = Lerp(power, currentDiff, 1 * delta / 1000);
-
-            endTime = endTime < 0 ? time / 1000 : endTime;
-            afterLife = (time / 1000 - endTime) * 200;
+            afterLife = (gameTime - endTime) * 200;
 
             this.MainUI.y = 64 - h / 2 - realAfterLife;
             this.KeyMap.y = h * (1 - (1 - controlPanle) / 2) - h / 2 + realAfterLife * 4;
@@ -1672,31 +1639,13 @@ class MainGame extends Phaser.Scene {
             comboTimeCount = 0;
             combo = 1;
         }
+        playerColor = ColorLerp([255, 201, 107], [255, 0, 0], ((X2TimeCount / X2Time) * 50) - Math.floor((X2TimeCount / X2Time) * 50));
         playerRealColor = ColorLerp(playerRealColor, playerColor, 5 * delta / 1000);
         this.player.setTint(getColor(playerRealColor[0], playerRealColor[1], playerRealColor[2]));
         this.updateScore(delta);
         X2SpawnTime = Lerp(30, 15, this.CurrentDiff());
-        maxBoomNum = Lerp(50, 150, this.CurrentDiff());
+        maxBoomNum = Lerp(35, 150, this.CurrentDiff());
         maxX2Num = Lerp(1, 3, this.CurrentDiff());
-        maxBlockNum = Lerp(210, 150, this.CurrentDiff());
-
-        let counter = 0;
-        while (counter < shockwaves.length) {
-            //console.log(shockwaves[counter].update(delta));
-            if (shockwaves[counter].update(delta)) {
-                counter++;
-            } else {
-                //console.log('Done');
-                shockwaves.splice(counter, 1);
-            }
-            //i++;
-        }
-        for (let i = 0; i != blocks.length; i++) {
-            blocks[i].y = blocks[i].getData('YReal') - CalPow(blocks[i].getData('XPos'), blocks[i].getData('YPos'));
-            //blocks[i].y = 0;
-        }
-        for (let i = 0; i != booms.length; i++) {
-            booms[i].y = booms[i].getData('YReal') - CalPow(booms[i].getData('XPos'), booms[i].getData('YPos'));
-        }
+        maxBlockNum = Lerp(240, 150, this.CurrentDiff());
     }
 }
