@@ -1279,6 +1279,7 @@ class MainGame extends Phaser.Scene {
                 newboom[i].setData('XPos', boomX);
                 newboom[i].setData('YPos', boomY);
                 newboom[i].setData('Index', 0);
+                newBoom[i].setData('YReal', newPos.y);
                 newboom[i].on('animationcomplete', () => {
                     newboom[i].anims.play("BoomLoop", true);
                 })
@@ -1539,6 +1540,7 @@ class MainGame extends Phaser.Scene {
                 playerDying = true;
                 howToDie = 0;
                 this.cam.shake(150, 0.05);
+                shockwaves.push(new ShockWave(x, y, 10));
                 this.makeTempAni(x, y, 'BoomEffect', 3, 19 - playerPos.x - playerPos.y);
                 this.makeTempAni(x, y, 'BoomSpawnEffect', 3, 18 - playerPos.x - playerPos.y);
                 if (boomCount < 3) {
