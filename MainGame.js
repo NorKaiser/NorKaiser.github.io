@@ -55,8 +55,8 @@ var endMove = false;
 var X2TimeCount = 0;
 
 const shockWaveTime = 0.5;
-const shockWaveDis = 10;
-const jumpTime = 0.25;
+const shockWaveDis = 20;
+const jumpTime = 0.2;
 class ShockWave {
     constructor(CenterX, CenterY, Power) {
         this.CenterX = CenterX;
@@ -91,7 +91,7 @@ function CalPow(x, y) {
     for (let i = 0; i != shockwaves.length; i++) {
         pow += shockwaves[i].CalPower(x, y);
     }
-    return pow * 25;
+    return pow * 20;
 }
 
 const startMoveSpeed = [[6, 0], [4, 0], [2, 0]];
@@ -1684,7 +1684,7 @@ class MainGame extends Phaser.Scene {
             if (shockwaves[counter].update(delta)) {
                 counter++;
             } else {
-                console.log('Done');
+                //console.log('Done');
                 shockwaves.splice(counter, 1);
             }
             //i++;
