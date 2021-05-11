@@ -54,6 +54,9 @@ var playerRealColor = [255, 201, 107];
 var endMove = false;
 var X2TimeCount = 0;
 
+const shockWaveTime = 1;
+const shockWaveDis = 20;
+
 const startMoveSpeed = [[6, 0], [4, 0], [2, 0]];
 const endMoveSpeed = [[350, 0], [300, 0], [250, 0]];
 var BGMoveSpeed = [[6, 0], [4, 0], [2, 0]];
@@ -66,10 +69,10 @@ var BGColor = [67, 107, 135];
 var BGRealColor = [67, 107, 135];
 const BGcolors = [[67, 107, 135], [102, 67, 135], [135, 76, 67]];
 const comboTime = 2.5;
-var maxBoomNum = 25;
-var maxBlockNum = 120;
+var maxBoomNum = 50;
+var maxBlockNum = 240;
 var maxX2Num = 1;
-const newBlockSpawnRange = 20;
+const newBlockSpawnRange = 28;
 const PlayerRange = 3;
 
 const BlockIndexs = ['FlipC', 'FlipB', 'FlipA'];
@@ -1308,7 +1311,7 @@ class MainGame extends Phaser.Scene {
         this.BGGroundC.tilePositionY = (c.y - BGMove[2][1] - realAfterLife) * 0.5 / 4;
 
         this.BGBlack.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
-        this.BGBlack.setDepth(30 - playerPos.x - playerPos.y);
+        this.BGBlack.setDepth(60 - playerPos.x - playerPos.y);
 
         this.StarSky.setScale(w / 16 / cameraZoom, h / 256 / cameraZoom);
         this.StarSky.setDepth(-99 - playerPos.x - playerPos.y);
@@ -1332,10 +1335,10 @@ class MainGame extends Phaser.Scene {
         let newPos = this.CalPos(playerPos);
         this.player.x = newPos.x;
         this.player.y = newPos.y;
-        this.player.setDepth(35 - playerPos.x - playerPos.y);
-        this.UIContainer.setDepth(50 - playerPos.x - playerPos.y);
+        this.player.setDepth(70 - playerPos.x - playerPos.y);
+        this.UIContainer.setDepth(100 - playerPos.x - playerPos.y);
         this.BG.setDepth(-100 - playerPos.x - playerPos.y);
-        this.PlayerUI.setDepth(40 - playerPos.x - playerPos.y);
+        this.PlayerUI.setDepth(90 - playerPos.x - playerPos.y);
 
         this.Grid.x = newPos.x;
         this.Grid.y = newPos.y;
@@ -1425,7 +1428,7 @@ class MainGame extends Phaser.Scene {
                     ScoreSize = 3;
                     x2s--;
                     this.cam.shake(150, 0.03);
-                    this.makeInfoText(x + 3, y + 3, 15, 2, 36 - playerPos.x - playerPos.y);
+                    this.makeInfoText(x + 3, y + 3, 15, 2, 80 - playerPos.x - playerPos.y);
                     this.cam.flash(50, 255, 220, 80);
                     playerRealColor = [255, 255, 255];
                     this.sound.play('X2Effect_2');
@@ -1433,7 +1436,7 @@ class MainGame extends Phaser.Scene {
                 } else {
                     Score += [10, 5, 25][Index] * combo * (X2TimeCount > 0 ? 5 : 1);
                     this.cam.shake(150, [0.005, 0.0025, 0.0125][Index] * combo + (X2TimeCount > 0 ? 0.04 : 0));
-                    this.makeInfoText(x + 3, y + 3, [1, 0, 2][Index] + (combo - 1) * 3 + (X2TimeCount > 0 ? 16 : 0), 1.5, 36 - playerPos.x - playerPos.y);
+                    this.makeInfoText(x + 3, y + 3, [1, 0, 2][Index] + (combo - 1) * 3 + (X2TimeCount > 0 ? 16 : 0), 1.5, 80 - playerPos.x - playerPos.y);
                     playerRealColor = [255, 255, 255];
                     if (X2TimeCount > 0) {
                         ScoreSize = 3;
@@ -1624,8 +1627,8 @@ class MainGame extends Phaser.Scene {
         this.player.setTint(getColor(playerRealColor[0], playerRealColor[1], playerRealColor[2]));
         this.updateScore(delta);
         X2SpawnTime = Lerp(30, 15, this.CurrentDiff());
-        maxBoomNum = Lerp(25, 75, this.CurrentDiff());
+        maxBoomNum = Lerp(50, 150, this.CurrentDiff());
         maxX2Num = Lerp(1, 3, this.CurrentDiff());
-        maxBlockNum = Lerp(120, 100, this.CurrentDiff());
+        maxBlockNum = Lerp(210, 150, this.CurrentDiff());
     }
 }
