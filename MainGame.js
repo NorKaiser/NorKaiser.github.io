@@ -54,8 +54,45 @@ var playerRealColor = [255, 201, 107];
 var endMove = false;
 var X2TimeCount = 0;
 
-const shockWaveTime = 1;
-const shockWaveDis = 20;
+const shockWaveTime = 0.5;
+const shockWaveDis = 10;
+const jumpTime = 0.25;
+class ShockWave {
+    constructor(CenterX, CenterY, Power) {
+        this.CenterX = CenterX;
+        this.CenterY = CenterY;
+        this.Power = (Power+10)/10;
+        this.Life = shockWaveTime * Power;
+        this.Dis = shockWaveDis * Power;
+        this.JumpTime = jumpTime * this.Dis / this.Life;
+        this.age = 0;
+        this.myPower = Power;
+        this.myDis = 0;
+    }
+    update(delta) {
+        this.age += delta / 1000;
+        if (this.age > this.Life) {
+            return false;
+        }
+        let timefrac = Clamp(this.age / this.Life, 0, 1);
+        this.myPower = this.Power * (1.0 / ((timefrac + 1) * (timefrac + 1)) - 0.25) / 0.75;
+        this.myDis = (1 - ((timefrac - 1) * (timefrac - 1))) * this.Dis;
+        return true;
+    }
+    CalPower(x, y) {
+        let dis = Math.sqrt((x - this.CenterX) * (x - this.CenterX) + (y - this.CenterY) * (y - this.CenterY));
+        let jumpfrac = Clamp((this.myDis - dis) / this.JumpTime, -0.5, 0.5) + 0.5;
+        return this.myPower * (1 - (2 * jumpfrac - 1) * (2 * jumpfrac - 1));
+    }
+}
+var shockwaves = [];
+function CalPow(x, y) {
+    let pow = 0;
+    for (let i = 0; i != shockwaves.length; i++) {
+        pow += shockwaves[i].CalPower(x, y);
+    }
+    return pow * 25;
+}
 
 const startMoveSpeed = [[6, 0], [4, 0], [2, 0]];
 const endMoveSpeed = [[350, 0], [300, 0], [250, 0]];
@@ -587,7 +624,11 @@ class MainGame extends Phaser.Scene {
             booms.splice(i, 1);
             //i++;
         }
-
+        i = 0;
+        while (i < shockwaves.length) {
+            shockwaves.splice(i, 1);
+            //i++;
+        }
 
         //blocks = [];
         //booms = [];
@@ -1104,6 +1145,7 @@ class MainGame extends Phaser.Scene {
             newBlock.setData('YPos', y);
             newBlock.setData('Postures', newBlockIndex);
             newBlock.setData('type', 0);
+            newBlock.setData('YReal', newPos.y);
 
             blocks.push(newBlock);
             //}
@@ -1147,6 +1189,7 @@ class MainGame extends Phaser.Scene {
             newBoom.setData('XPos', x);
             newBoom.setData('YPos', y);
             newBoom.setData('Index', newBoomIndex);
+            newBoom.setData('YReal', newPos.y);
             newBoom.on('animationcomplete', () => {
                 newBoom.anims.play("BoomLoop", true);
             })
@@ -1192,6 +1235,7 @@ class MainGame extends Phaser.Scene {
             newX2.setData('YPos', y);
             newX2.setData('Postures', newX2Index + 1);
             newX2.setData('type', 1);
+            newX2.setData('YReal', newPos.y);
             newX2.on('animationcomplete', () => {
                 newX2.anims.play(X2LoopIndexs[newX2Index], true);
             })
@@ -1432,6 +1476,7 @@ class MainGame extends Phaser.Scene {
                     this.cam.flash(50, 255, 220, 80);
                     playerRealColor = [255, 255, 255];
                     this.sound.play('X2Effect_2');
+                    shockwaves.push(new ShockWave(x, y, 5));
 
                 } else {
                     Score += [10, 5, 25][Index] * combo * (X2TimeCount > 0 ? 5 : 1);
@@ -1440,8 +1485,10 @@ class MainGame extends Phaser.Scene {
                     playerRealColor = [255, 255, 255];
                     if (X2TimeCount > 0) {
                         ScoreSize = 3;
+                        shockwaves.push(new ShockWave(x, y, [2, 1, 3][Index] * 1.5));
                         this.sound.play('X2Effect_1');
                     } else {
+                        shockwaves.push(new ShockWave(x, y, [2, 1, 3][Index]));
                         this.sound.play('MagicExplosion_' + Phaser.Math.Between(1, 3).toString());
                     }
                 }
@@ -1630,5 +1677,24 @@ class MainGame extends Phaser.Scene {
         maxBoomNum = Lerp(50, 150, this.CurrentDiff());
         maxX2Num = Lerp(1, 3, this.CurrentDiff());
         maxBlockNum = Lerp(210, 150, this.CurrentDiff());
+
+        let counter = 0;
+        while (counter < shockwaves.length) {
+            //console.log(shockwaves[counter].update(delta));
+            if (shockwaves[counter].update(delta)) {
+                counter++;
+            } else {
+                console.log('Done');
+                shockwaves.splice(counter, 1);
+            }
+            //i++;
+        }
+        for (let i = 0; i != blocks.length; i++) {
+            blocks[i].y = blocks[i].getData('YReal') - CalPow(blocks[i].getData('XPos'), blocks[i].getData('YPos'));
+            //blocks[i].y = 0;
+        }
+        for (let i = 0; i != booms.length; i++) {
+            booms[i].y = booms[i].getData('YReal') - CalPow(booms[i].getData('XPos'), booms[i].getData('YPos'));
+        }
     }
 }
