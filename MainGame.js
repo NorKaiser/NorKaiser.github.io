@@ -1627,6 +1627,8 @@ class MainGame extends Phaser.Scene {
             newDyingEffect.destroy();
         })*/
         endTime = gameTime;
+        realAfterLife = 0;
+        afterLife = 0;
 
         /*this.player = this.add.sprite(w / 2, h / 2, 'HighIdel')
         this.player.setScale(2.5);
