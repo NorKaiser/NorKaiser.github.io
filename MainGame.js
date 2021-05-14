@@ -56,7 +56,7 @@ var playerColor = [255, 201, 107];
 var playerRealColor = [255, 201, 107];
 var endMove = false;
 var X2TimeCount = 0;
-var generaNumberSound = [false, false, false, false];
+var generaNumberSound = [false, false, false, false, false, false, false, false];
 var restart = false;
 var dyingTouch = false;
 
@@ -240,6 +240,17 @@ class MainGame extends Phaser.Scene {
         this.load.audio('Boom_1', 'aud/Boom_1.mp3');
         this.load.audio('Boom_2', 'aud/Boom_2.mp3');
 
+        this.load.audio('BreakDown_1', 'aud/BreakDown_1.mp3');
+        this.load.audio('BreakDown_2', 'aud/BreakDown_2.mp3');
+        this.load.audio('BreakDown_3', 'aud/BreakDown_3.mp3');
+        this.load.audio('BreakDown_4', 'aud/BreakDown_4.mp3');
+
+        this.load.audio('Swoosh_1', 'aud/Swoosh_1.mp3');
+        this.load.audio('Swoosh_2', 'aud/Swoosh_2.mp3');
+        this.load.audio('Swoosh_3', 'aud/Swoosh_3.mp3');
+        this.load.audio('Swoosh_4', 'aud/Swoosh_4.mp3');
+
+        this.load.audio('BGM_1', 'aud/BGM_1.mp3');
     }
 
     CalPos(Pos) {
@@ -594,10 +605,7 @@ class MainGame extends Phaser.Scene {
         endMove = true;
         restart = false;
         dyingTouch = false;
-        generaNumberSound[0] = false;
-        generaNumberSound[1] = false;
-        generaNumberSound[2] = false;
-        generaNumberSound[3] = false;
+        for (let i = 0; i < generaNumberSound.length; i++) { generaNumberSound[i] = false; }
 
 
         BGMoveSpeed = [[6, 0], [4, 0], [2, 0]];
@@ -958,6 +966,9 @@ class MainGame extends Phaser.Scene {
         //console.log(this.player.anims);
         this.updatePlayer();
         this.updateScore(1);
+
+        this.sound.play('BGM_1');
+
         this.player.on('animationcomplete', () => {
             if (playerDying) {
                 if (playerDying && playerDied) {
@@ -1608,6 +1619,8 @@ class MainGame extends Phaser.Scene {
         } else {
             this.player.anims.play(DieAnimsB[playerPosture], true);
         }
+        this.sound.play('BreakDown_' + Phaser.Math.Between(1, 4).toString());
+
         this.PowerBar.visible = false;
 
         this.playerAfterLife.x = this.player.x;
@@ -1713,6 +1726,10 @@ class MainGame extends Phaser.Scene {
         let StepB = this.CalVec(-Math.cos(35 * Math.PI / 180), Math.sin(35 * Math.PI / 180));
         //console.log(Lerp(h / 2 + 64, 0, timeFrac));
 
+        if (timeFrac > 0 && !generaNumberSound[4]) {
+            this.sound.play('Swoosh_1');
+            generaNumberSound[4] = true;
+        }
         let ScoreBoardTimes = [0, 0.3];
         let ScoreBoardStartY = h / 2 + 64 * BoardSize;
         let ScoreBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, ScorePos);
@@ -1727,6 +1744,10 @@ class MainGame extends Phaser.Scene {
             generaNumberSound[0] = true;
         }
 
+        if (timeFrac > 0.1 && !generaNumberSound[5]) {
+            this.sound.play('Swoosh_2');
+            generaNumberSound[5] = true;
+        }
         let TimeBoardTimes = [0.1, 0.4];
         let TimeBoardStartY = h / 2 + 64 * BoardSize;
         let TimeBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, TimePos);
@@ -1741,6 +1762,10 @@ class MainGame extends Phaser.Scene {
             generaNumberSound[1] = true;
         }
 
+        if (timeFrac > 0.2 && !generaNumberSound[6]) {
+            this.sound.play('Swoosh_3');
+            generaNumberSound[6] = true;
+        }
         let DistanceBoardTimes = [0.2, 0.5];
         let DistanceBoardStartY = h / 2 + 64 * BoardSize;
         let DistanceBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, DistancePos);
@@ -1755,7 +1780,10 @@ class MainGame extends Phaser.Scene {
             generaNumberSound[2] = true;
         }
 
-
+        if (timeFrac > 0.3 && !generaNumberSound[7]) {
+            this.sound.play('Swoosh_4');
+            generaNumberSound[7] = true;
+        }
         let RetryBoardTimes = [0.3, 0.6];
         let RetryBoardStartY = h / 2 + 64 * BoardSize;
         let RetryBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, RetryPos);
