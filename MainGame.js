@@ -926,7 +926,7 @@ class MainGame extends Phaser.Scene {
         this.UIContainer = this.add.container(w / 2, h / 2, [this.MainUI, this.KeyMap, this.EndingBoard].concat(this.ScoreMap));
         this.UIContainer.setScrollFactor(0, 0);
         this.UIContainer.setDepth(50 - playerPos.x - playerPos.x);
-        this.UIContainer.alpha = 0;
+        //this.UIContainer.alpha = 0;
 
 
 
