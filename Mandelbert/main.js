@@ -244,7 +244,7 @@ void main(void)
 
 `;
 sandbox.load(string_frag_code);
-sandbox.setUniform("resolution",window.innerWidth,window.innerHeight);
+sandbox.setUniform("resolution",720*window.innerWidth/window.innerHeight,720);
 sandbox.setUniform("_camRotate",5.0,20.0,0.0);
 sandbox.setUniform("_camPos",0.0,0.0,-4.0);
 sandbox.setUniform("_lightpos",2,4,-3.0);
@@ -260,7 +260,7 @@ sandbox.setUniform("_c",0.026315808,0.70175433,0.71052635);
 
 window.addEventListener("resize", resizeCanvas, false);
 function resizeCanvas() {
-    sandbox.setUniform("resolution",window.innerWidth,window.innerHeight);
+    sandbox.setUniform("resolution",720*window.innerWidth/window.innerHeight,720);
 }
 
 
