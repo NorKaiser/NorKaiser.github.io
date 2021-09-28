@@ -1,16 +1,18 @@
 var canvas = document.getElementById("myCanvas");
 var sandbox = new GlslCanvas(canvas);
-var string_frag_code = `precision highp float;
+var string_frag_code = 
+`precision mediump float;
 
 uniform vec2 resolution;
 uniform vec3 _camRotate;
 uniform vec3 _camPos;
 uniform vec3 _lightpos;
 uniform float _fov;
+uniform vec2 _mousepos;
 
 uniform float _lightIntensity;
 uniform float _shadowStrength;
-const int _maxStep = 256;
+const int _maxStep = 128;
 const int _iteration = 20;
 uniform float _power;
 uniform vec3 _c;
@@ -52,7 +54,7 @@ vec3 Rotate(vec3 org,vec3 rot){
 vec3 lerp(vec3 a,vec3 b,float t){
     return (b-a)*t+a;
 }
-float Mandelbulb(vec3 poso) {
+float Mandelbulb(vec3 poso,vec3 c) {
     float _nx = _power * 2.0;
     vec3 pos = vec3(poso.x, poso.z, poso.y);
     vec3 z = pos;
@@ -60,7 +62,7 @@ float Mandelbulb(vec3 poso) {
     float r = 0.0;
     for (int i = 0; i < _iteration; i++) {
         r = length(z);
-        if (r > 4.0)
+        if (r > 3.0)
             break;
         float theta = acos(z.z / r);
         float phi = atan(z.y/z.x);
@@ -71,26 +73,26 @@ float Mandelbulb(vec3 poso) {
         phi = phi * _nx;
 
         z = zr * vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
-        z += _c;
+        z += c;
     }
     float dis = 0.5*log(r)*r / dr;
     return dis;
 }
-float DE(vec3 pos) {
+float DE(vec3 pos,vec3 c) {
     //return length(pos)-1.0;
-    float b = Mandelbulb(pos);
+    float b = Mandelbulb(pos,c);
     return b;
 }
 float geta(float d, float r) {
     return asin(r/d) * 180.0 / 3.1415;
 }
-vec3 getn(vec3 pos,float dir) {
+vec3 getn(vec3 pos,float dir,vec3 c) {
     vec3 xdir = vec3(dir, 0, 0);
     vec3 ydir = vec3(0, dir, 0);
     vec3 zdir = vec3(0, 0, dir);
-    vec3 n = normalize(vec3(DE(pos + xdir) - DE(pos - xdir),
-        DE(pos + ydir) - DE(pos - ydir),
-        DE(pos + zdir) - DE(pos - zdir)));
+    vec3 n = normalize(vec3(DE(pos + xdir,c) - DE(pos - xdir,c),
+        DE(pos + ydir,c) - DE(pos - ydir,c),
+        DE(pos + zdir,c) - DE(pos - zdir,c)));
     return n;
 }
 vec4 BlinnPhong(vec3 lightDir,vec3 viewDir,vec3 normal,float ao,float shadow) {
@@ -110,16 +112,26 @@ vec4 BlinnPhong(vec3 lightDir,vec3 viewDir,vec3 normal,float ao,float shadow) {
     vec4 c = vec4(r,r,r, 1);
     return c;
 }
-float getshadow(vec3 p) {
-    vec3 from = _lightpos;
-    vec3 direction = normalize(p - _lightpos);
+float getshadow(vec3 p,vec3 lightPos,vec3 c) {
+    vec3 from = lightPos;
+    vec3 direction = normalize(p - lightPos);
+    
+    if(length(from)>2.0){
+        float ptoc = (dot(-from,normalize(direction)));
+        vec3 c = ptoc*direction+from;
+        if(length(c)>2.0){
+            return 0.0;
+        }
+        float ctoa = sqrt(4.0-length(c));
+        from = from+direction*(ptoc-ctoa);
+    }
 
     float totalDistance = 0.0;
     float a = 90.0;
     int steps = 0;
     for (int steps_i = 0; steps_i < _maxStep; steps_i++) {
         vec3 pn = from + totalDistance * direction;
-        float distance = DE(pn);
+        float distance = DE(pn,c);
         float na = abs(geta(length(p - pn), distance));
         if (na < a)
             a = na;
@@ -136,7 +148,7 @@ float getshadow(vec3 p) {
     return sha;
 }
 
-vec4 raymarch(vec3 from, vec3 direction) {
+vec4 raymarch(vec3 from, vec3 direction,vec3 lightPos,vec3 c) {
     float totalDistance = 0.0;
 
     int steps = 0;
@@ -144,7 +156,7 @@ vec4 raymarch(vec3 from, vec3 direction) {
 
     for (int steps_i = 0; steps_i < _maxStep; steps_i++) {
         p = from + totalDistance * direction;
-        float distance = DE(p);
+        float distance = DE(p,c);
         totalDistance += distance;
         if (distance < 1.0/(pow(10.0,_accuracy))){
             break;
@@ -156,27 +168,38 @@ vec4 raymarch(vec3 from, vec3 direction) {
     if (steps == _maxStep)
         return vec4(0,0,0,1);
 
-    float dis = length(p - _lightpos);
+    float dis = length(p - lightPos);
 
     float a = 90.0;
     float sha = 0.0;
 
     if (_lightIntensity != 0.0 && _shadowStrength != 0.0) {
-        sha = getshadow(p);
+        sha = getshadow(p,lightPos,c);
     }
 
-    vec3 normal = getn(p, 1.0 / (pow(10.0, _accuracy)));
+    vec3 normal = getn(p, 1.0 / (pow(10.0, _accuracy)),c);
 
 
-    vec4 c = BlinnPhong(_lightpos-p, from-p, normal, col, sha);
+    vec4 color = BlinnPhong(lightPos-p, from-p, normal, col, sha);
 
-    return c;
+    return color;
 }
-            
+bool raycastSphere(vec3 pos,float rad,vec3 ro,vec3 rd){
+    float ptoc = (dot(pos-ro,normalize(rd)));
+    if(ptoc<0.0){
+        return false;
+    }
+    vec3 c = ptoc*rd+ro;
+    if(length(c-pos)>rad){
+        return false;
+    }
+    return true;
+}
 void main(void)
 {
     vec3 camPos = _camPos;
     vec3 camAng = _camRotate;
+    camAng = vec3(camAng.x+_mousepos.y*20.0,camAng.y+_mousepos.x*20.0,camAng.z);
     camPos = Rotate(camPos,camAng);
     float aspect = resolution.y/resolution.x;
     
@@ -189,21 +212,46 @@ void main(void)
     vec3 cam_right =  Rotate(vec3(1.0,0.0,0.0),camAng);
     vec3 cam_up =  Rotate(vec3(0.0,1.0,0.0),camAng);
     vec3 dirPlane = normalize(cam_forward+cam_right*uv.x*w+cam_up*uv.y*h);
+    vec3 dir = dirPlane;
 
+        
+    vec3 lightPos = vec3(_lightpos.x + _mousepos.x*1.5,_lightpos.y-_mousepos.y*3.0,_lightpos.z); 
+    vec3 c = vec3(_c.x + _mousepos.y*0.3,_c.y+_mousepos.x*0.3,_c.z);
 
-    gl_FragColor = raymarch(camPos,dirPlane);
+    /*if(raycastSphere(lightPos,0.25,camPos,dir)){
+        gl_FragColor = vec4(1,1,1,1);
+        return;
+    }*/
+
+    if(length(camPos)>2.0){
+        float ptoc = (dot(-camPos,normalize(dir)));
+        if(ptoc<0.0){
+            gl_FragColor = vec4(0,0,0,1);
+            return;
+        }
+        vec3 c = ptoc*dir+camPos;
+        if(length(c)>2.0){
+            gl_FragColor = vec4(0,0,0,1);
+            return;
+        }
+        float ctoa = sqrt(4.0-length(c));
+        camPos = camPos+dir*(ptoc-ctoa);
+    }
+
+    gl_FragColor = raymarch(camPos,dirPlane,lightPos,c);
+
 }
 
 `;
 sandbox.load(string_frag_code);
 sandbox.setUniform("resolution",window.innerWidth,window.innerHeight);
-sandbox.setUniform("_camRotate",5.0,30.0,0.0);
+sandbox.setUniform("_camRotate",5.0,20.0,0.0);
 sandbox.setUniform("_camPos",0.0,0.0,-4.0);
-sandbox.setUniform("_lightpos",-1.0,2.0,-2.0);
+sandbox.setUniform("_lightpos",2,4,-3.0);
 sandbox.setUniform("_fov",100.0);
 sandbox.setUniform("_lightIntensity",15.0);
 sandbox.setUniform("_shadowStrength",1.0);
-sandbox.setUniform("_power",1);
+sandbox.setUniform("_power",2.0);
 sandbox.setUniform("_ao",1.0);
 sandbox.setUniform("_diffuse",1.0);
 sandbox.setUniform("_specular",1.0);
@@ -230,11 +278,9 @@ window.requestAnimationFrame(tick)
 
 
 function update(delta){
-    LightPos[0] = (MousePos[0]-LightPos[0])*delta/1000.0 + LightPos[0];
-    LightPos[1] = (MousePos[1]-LightPos[1])*delta/1000.0 + LightPos[1];
-    sandbox.setUniform("_camRotate",5.0 + LightPos[1]*10,30.0+LightPos[0]*10,0.0);
-    sandbox.setUniform("_c",0.026315808 + LightPos[1]*0.1,0.70175433+LightPos[0]*0.1,0.71052635);
-    sandbox.setUniform("_lightpos",0.75 + LightPos[0]*1.5,2-LightPos[1]*3,-2.0);
+    LightPos[0] = (MousePos[0]-LightPos[0])*delta/500.0 + LightPos[0];
+    LightPos[1] = (MousePos[1]-LightPos[1])*delta/500.0 + LightPos[1];
+    sandbox.setUniform("_mousepos",LightPos[0],LightPos[1]);
 }
 canvas.onmousedown = function(e){
 
@@ -245,13 +291,12 @@ canvas.onmouseup = function(e){
 canvas.onmousemove = function(e){
     MousePos = getPointOnCanvas(canvas, e.pageX, e.pageY);
 }
+canvas.ontouchmove = function(e){
+    MousePos = getPointOnCanvas(canvas, e.pageX, e.pageY);
+}
 
 function getPointOnCanvas(canvas, x, y) {
-
     var bbox =canvas.getBoundingClientRect();
- 
-    return [(x- bbox.left)  / bbox.width - 0.5,
- 
-            (y - bbox.top)  / bbox.height - 0.5];
+    return [(x- bbox.left)  / bbox.width - 0.5,(y - bbox.top)  / bbox.height - 0.5];
  
  }
