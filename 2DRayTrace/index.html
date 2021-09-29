@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=0.5, maximum-scale=0.5, minimum-scale=0.5,minimal-ui">
-    <script type="text/javascript" src="https://rawgit.com/patriciogonzalezvivo/glslCanvas/master/dist/GlslCanvas.js"></script>
+    <script type="text/javascript" src="GlslCanvas.js"></script>
 
     <title>Document</title>
     <style>
@@ -30,16 +30,16 @@
 </body>
 <script>
     var myCanvas = document.createElement("canvas");
-    myCanvas.setAttribute("width", window.innerWidth);
-    myCanvas.setAttribute("height", window.innerHeight);
+    myCanvas.setAttribute("width", window.innerWidth/2);
+    myCanvas.setAttribute("height", window.innerHeight/2);
     myCanvas.setAttribute("id", "myCanvas");
     document.body.appendChild(myCanvas);
 
     window.addEventListener("resize", resizeCanvas, false);
 
     function resizeCanvas() {
-        myCanvas.width = window.innerWidth;
-        myCanvas.height = window.innerHeight;
+        myCanvas.width = window.innerWidth/2;
+        myCanvas.height = window.innerHeight/2;
     }
 </script>
 <script src="main.js"></script>

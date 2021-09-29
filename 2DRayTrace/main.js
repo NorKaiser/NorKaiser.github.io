@@ -4,7 +4,7 @@ var string_frag_code =
 `precision mediump float;
 
 const float Brightness = 4.0;
-const int Samplers = 32;
+const int Samplers = 64;
 const int MaxStep = 4;
 const float CLightR = 0.04;
 const vec3 CLight = vec3(1.0,1.0,1.0);
@@ -191,9 +191,9 @@ void main()
 
 
     for(int j = 0;j!=Samplers;j++){
-        for(int colornow = 0;colornow!=3;colornow++){
-            float dispersionIndex = (1.0+(float(colornow)-1.0)*dispersion);
-            //float dispersionIndex = 1.0;
+        //for(int colornow = 0;colornow!=3;colornow++){
+            //float dispersionIndex = (1.0+(float(colornow)-1.0)*dispersion);
+            float dispersionIndex = 1.0;
             float angle = float(j)/float(Samplers);
             //angle += random(mypos)*(1./float(Samplers));
             angle += (dither+random(mypos+vec2(j)))*(1./float(Samplers));
@@ -207,13 +207,13 @@ void main()
                     break;
                 }
                 if(collide.x==0.0){
-                    //light += CLight*Brightness/float(Samplers);
-                    if(colornow==0)
+                    light += CLight*Brightness/float(Samplers);
+                    /*if(colornow==0)
                         light += intensity * CLight*Brightness*vec3(1.,0.,0.)/float(Samplers);
                     if(colornow==1)
                         light += intensity * CLight*Brightness*vec3(0.,1.,0.)/float(Samplers);
                     if(colornow==2)
-                        light += intensity * CLight*Brightness*vec3(0.,0.,1.)/float(Samplers);
+                        light += intensity * CLight*Brightness*vec3(0.,0.,1.)/float(Samplers);*/
                     break;
                 }else if(collide.x==1.0){
                     //light += RLight.yzw*Brightness/float(Samplers);
@@ -241,17 +241,17 @@ void main()
                     pos = pos + dir*0.00001;
                 }
                 intensity*=Attenuation;
-            }
+            //}
         }
         
     }
     vec4 color = vec4(light.xyz,1);
     gl_FragColor = color;
     
-    if(insideLogo(mypos)){
+    /*if(insideLogo(mypos)){
         gl_FragColor = vec4(1) - color;
         return;
-    }
+    }*/
 }
 
 
@@ -259,7 +259,7 @@ void main()
 
 
 sandbox.load(string_frag_code);
-sandbox.setUniform("resolution",window.innerWidth,window.innerHeight);
+sandbox.setUniform("resolution",window.innerWidth/2,window.innerHeight/2);
 sandbox.setUniform("Reta",1.55);
 sandbox.setUniform("LogoSize",0.2);
 sandbox.setUniform("Par",64,8,6);
@@ -271,7 +271,7 @@ sandbox.setUniform("LogoMap","Logo_1px.png");
 
 window.addEventListener("resize", resizeCanvas, false);
 function resizeCanvas() {
-    sandbox.setUniform("resolution",window.innerWidth,window.innerHeight);
+    sandbox.setUniform("resolution",window.innerWidth/2,window.innerHeight/2);
 }
 
 
