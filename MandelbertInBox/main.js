@@ -17,7 +17,7 @@ uniform vec3 _c;
 const float _accuracy = 3.3;
 
 uniform vec3 _cubeRot;
-uniform sampler2D _bg;
+uniform sampler2D bg;
 const float _eta = 2.417;
 const float _cubeSize = 2.3;
 
@@ -195,7 +195,7 @@ vec4 getSky(vec3 direction){
     float ypos = atan(direction.y/sqrt(direction.x*direction.x+direction.z*direction.z));
     xpos = xpos/2.0/3.14159+0.5;
     ypos = 1.0-(ypos/3.14159+0.5);
-    return texture2D(_bg,vec2(xpos,ypos));
+    return texture2D(bg,vec2(xpos,ypos));
 }
 vec4 raytraceCube(vec3 pos,vec3 dir,vec3 Rotation,float size){
     pos = Rotate(pos,Rotation)/size;
@@ -330,7 +330,7 @@ sandbox.setUniform("_camPos",0.0,0.0,-9.0);
 sandbox.setUniform("_fov",27.0);
 sandbox.setUniform("_power",2.0);
 sandbox.setUniform("_c",0.026315808,0.70175433,0.71052635);
-sandbox.setUniform("_bg","_bg.png");
+sandbox.setUniform("bg","bg.png");
 
 
 
