@@ -291,8 +291,8 @@ void main(void)
     camPos = Rotate(camPos,camAng);
     float aspect = resolution.y/resolution.x;
     
-    vec3 c = _c+(vec3(0,_mouse)-vec3(0,0.5,0.5))*0.5;
-
+    vec3 c = _c+(vec3(0,_mouse)-vec3(0,0.5,0.5))*0.15;
+    //vec3 c = _c;
     
     vec2 uv = -1. + 2. * (gl_FragCoord.xy/resolution.xy);
     vec3 dirSphere = Rotate(Rotate(vec3(0.0,0.0,1.0),vec3(-uv.y*_fov*0.5*aspect,uv.x*_fov*0.5,0.0)),camAng);
@@ -328,8 +328,8 @@ sandbox.setUniform("resolution",canvas.width,canvas.height);
 sandbox.setUniform("_camRotate",5.0,20.0,0.0);
 sandbox.setUniform("_camPos",0.0,0.0,-9.0);
 sandbox.setUniform("_fov",27.0);
-sandbox.setUniform("_power",2.0);
-sandbox.setUniform("_c",0.026315808,0.70175433,0.71052635);
+sandbox.setUniform("_power",1.0);
+sandbox.setUniform("_c",-0.017770588,0.45718896,-0.079159915);
 sandbox.setUniform("bg","bg.png");
 
 
