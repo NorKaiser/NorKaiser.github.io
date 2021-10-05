@@ -6,20 +6,22 @@ var string_frag_code =
 uniform vec2 resolution;
 uniform vec3 _camRotate;
 uniform vec3 _camPos;
-uniform float _fov;
+const float _fov = 27.0;
 uniform vec2 _mouse;
 
 
 const int _maxStep = 256;
 const int _iteration = 20;
-uniform float _power;
-uniform vec3 _c;
+const float _power = 1.0;
+const vec3 _c = vec3(-0.017770588,0.45718896,-0.079159915);
 const float _accuracy = 3.3;
 
-uniform vec3 _cubeRot;
+const vec3 _cubeRot = vec3(0.);
 uniform sampler2D bg;
-const float _eta = 2.417;
+const float _eta = 1.2;
 const float _cubeSize = 2.3;
+uniform sampler2D normalMap;
+const float normalMapHeight = 0.2;
 
 
 vec3 rotate_z(vec3 org,float angle){
@@ -113,7 +115,7 @@ vec4 raymarch(vec3 from, vec3 direction,vec3 c) {
     }
     
     if (steps == _maxStep)
-        return vec4(0,0,0,1);
+        return vec4(1)*0.05;
     
     float col = pow(float(steps) / float(_maxStep),0.9);
     
@@ -214,7 +216,9 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 Rotation,float size){
         if(endTemp.x>-.5 && endTemp.x<.5 && endTemp.y>-.5 && endTemp.y<.5){
             if(abs(disTemp)<dis){
                 dis = abs(disTemp);
-                normal = vec3(0.,0.,-1.);
+                vec2 uv = endTemp.xy+vec2(.5);
+                normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,90.,0.)));
+                normal = lerp(vec3(0.,0.,-1.)*sign(disTemp),normal,normalMapHeight);
             }
         }
     }
@@ -226,7 +230,9 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 Rotation,float size){
         if(endTemp.x>-.5 && endTemp.x<.5 && endTemp.y>-.5 && endTemp.y<.5){
             if(abs(disTemp)<dis){
                 dis = abs(disTemp);
-                normal = vec3(0.,0.,1.);
+                vec2 uv = endTemp.xy+vec2(.5);
+                normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,-90.,0.)));
+                normal = lerp(vec3(0.,0.,1.)*sign(disTemp),normal,normalMapHeight);
             }
         }
     }
@@ -238,7 +244,9 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 Rotation,float size){
         if(endTemp.x>-.5 && endTemp.x<.5 && endTemp.z>-.5 && endTemp.z<.5){
             if(abs(disTemp)<dis){
                 dis = abs(disTemp);
-                normal = vec3(0.,1.,0.);
+                vec2 uv = endTemp.xz+vec2(.5);
+                normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,.0,90.)));
+                normal = lerp(vec3(0.,1.,0.)*sign(disTemp),normal,normalMapHeight);
             }
         }
     }
@@ -250,7 +258,9 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 Rotation,float size){
         if(endTemp.x>-.5 && endTemp.x<.5 && endTemp.z>-.5 && endTemp.z<.5){
             if(abs(disTemp)<dis){
                 dis = abs(disTemp);
-                normal = vec3(0.,-1.,0.);
+                vec2 uv = endTemp.xz+vec2(.5);
+                normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,.0,-90.)));
+                normal = lerp(vec3(0.,-1.,0.)*sign(disTemp),normal,normalMapHeight);
             }
         }
     }
@@ -262,7 +272,9 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 Rotation,float size){
         if(endTemp.y>-.5 && endTemp.y<.5 && endTemp.z>-.5 && endTemp.z<.5){
             if(abs(disTemp)<dis){
                 dis = abs(disTemp);
-                normal = vec3(1.,0.,0.);
+                vec2 uv = endTemp.yz+vec2(.5);
+                normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,.0,0.)));
+                normal = lerp(vec3(1.,0.,0.)*sign(disTemp),normal,normalMapHeight);
             }
         }
     }
@@ -274,7 +286,9 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 Rotation,float size){
         if(endTemp.y>-.5 && endTemp.y<.5 && endTemp.z>-.5 && endTemp.z<.5){
             if(abs(disTemp)<dis){
                 dis = abs(disTemp);
-                normal = vec3(-1.,0.,0.);
+                vec2 uv = endTemp.yz+vec2(.5);
+                normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,180.0,0.)));
+                normal = lerp(vec3(-1.,0.,0.)*sign(disTemp),normal,normalMapHeight);
             }
         }
     }
@@ -287,12 +301,13 @@ void main(void)
     vec3 camPos = _camPos;
     vec3 camAng = _camRotate;
     
-    camAng = vec3(camAng.x+(_mouse.y-0.5)*180.0,camAng.y+(_mouse.x-0.5)*360.0,camAng.z);
+    vec2 mouse = _mouse.xy - vec2(0.5);
+    camAng = vec3(camAng.x+(mouse.y)*180.0,camAng.y+(mouse.x)*360.0,camAng.z);
     camPos = Rotate(camPos,camAng);
     float aspect = resolution.y/resolution.x;
     
-    vec3 c = _c+(vec3(0,_mouse)-vec3(0,0.5,0.5))*0.15;
-    //vec3 c = _c;
+    
+
     
     vec2 uv = -1. + 2. * (gl_FragCoord.xy/resolution.xy);
     vec3 dirSphere = Rotate(Rotate(vec3(0.0,0.0,1.0),vec3(-uv.y*_fov*0.5*aspect,uv.x*_fov*0.5,0.0)),camAng);
@@ -304,11 +319,27 @@ void main(void)
     vec3 cam_up =  Rotate(vec3(0.0,1.0,0.0),camAng);
     vec3 dirPlane = normalize(cam_forward+cam_right*uv.x*w+cam_up*uv.y*h);
     vec3 dir = dirPlane;
+
+
+    /*if(length(camPos)>2.0){
+        float ptoc = (dot(-camPos,normalize(dir)));
+        if(ptoc<0.0){
+            gl_FragColor = vec4(0,0,0,1);
+            return;
+        }
+        vec3 c = ptoc*dir+camPos;
+        if(length(c)>2.0){
+            gl_FragColor = vec4(0,0,0,1);
+            return;
+        }
+        float ctoa = sqrt(4.0-length(c));
+        camPos = camPos+dir*(ptoc-ctoa);
+    }*/
     
 
     vec4 raycastCube = raytraceCube(camPos,dir,_cubeRot,_cubeSize);
     if(raycastCube.x>999998.0){
-        gl_FragColor = vec4(0,0,0,1);
+        gl_FragColor = vec4(0,0,0,0);
         return;
     }
 
@@ -317,9 +348,10 @@ void main(void)
     
     camPos += dir*raycastCube.x;
     dir = refract(dir,raycastCube.yzw,1.0/_eta);
-    vec4 remarchColor = raymarch(camPos,dir,c);
+    vec4 remarchColor = raymarch(camPos,dir,_c);
     gl_FragColor = reflectColor*(1.0-refelectRatio)+remarchColor*(refelectRatio);
-
+    
+    //gl_FragColor = vec4(raytraceCube(camPos,dirPlane,_cubeRot,1.).yzw,1.0);
 }
 
 `;
@@ -331,11 +363,13 @@ sandbox.setUniform("_fov",27.0);
 sandbox.setUniform("_power",1.0);
 sandbox.setUniform("_c",-0.017770588,0.45718896,-0.079159915);
 sandbox.setUniform("bg","bg.png");
+sandbox.setUniform("normalMap","normalMap.png");
 
 
 
 var LightPos = [0,0];
-var MousePos = [0,0];
+var TargetPos = [0,0];
+var StartTouchPos = [0,0];
 
 var lastTick = performance.now()
 function tick(nowish) {
@@ -348,14 +382,21 @@ window.requestAnimationFrame(tick)
 
 
 function update(delta){
-    LightPos[0] = (MousePos[0]-LightPos[0])*delta/500.0 + LightPos[0];
-    LightPos[1] = (MousePos[1]-LightPos[1])*delta/500.0 + LightPos[1];
+    LightPos[0] = (TargetPos[0]-LightPos[0])*delta/500.0 + LightPos[0];
+    LightPos[1] = (TargetPos[1]-LightPos[1])*delta/500.0 + LightPos[1];
     sandbox.setUniform("_mouse",LightPos[0],LightPos[1]);
 }
 
 document.onmousemove = function(e){
-    MousePos = [e.pageX/window.innerWidth, e.pageY/window.innerHeight];
+    var MousePos = [e.pageX/window.innerWidth, e.pageY/window.innerHeight];
+    TargetPos = MousePos;
+}
+document.ontouchstart = function(e){
+    StartTouchPos = [e.pageX/window.innerWidth, e.pageY/window.innerHeight];
 }
 document.ontouchmove = function(e){
-    MousePos = [e.pageX/window.innerWidth, e.pageY/window.innerHeight];
+    var TouchPos = [e.pageX/window.innerWidth, e.pageY/window.innerHeight];
+    TargetPos[0] = TargetPos[0] + TouchPos[0]-StartTouchPos[0];
+    TargetPos[1] = TargetPos[1] + TouchPos[1]-StartTouchPos[1];
+    StartTouchPos = TouchPos;
 }
