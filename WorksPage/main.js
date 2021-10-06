@@ -344,7 +344,7 @@ void main(void)
     vec3 camAng = _camRot;
     
     vec2 mouse = _mouse.xy-vec2(.5);
-    camAng = vec3(camAng.x+(mouse.y)*20.0,camAng.y-(mouse.x)*20.0,camAng.z);
+    camAng = vec3(camAng.x+(mouse.y)*20.0,camAng.y-(mouse.x)*30.0,camAng.z);
     camPos = Rotate(camPos,camAng);
     float aspect = resolution.y/resolution.x;
     
@@ -371,9 +371,10 @@ void main(void)
 `;
 sandbox.load(string_frag_code);
 sandbox.setUniform("resolution",canvas.width,canvas.height);
+sandbox.setUniform("_mouse",0.5,0.5);
 sandbox.setUniform("_camRot",0.0,0.0,0.0);
 sandbox.setUniform("_camPos",0.0,0.0,-4.3);
-sandbox.setUniform("_offset",0.0,-0.15);
+sandbox.setUniform("_offset",0.0,0);
 sandbox.setUniform("_fov",80.0);
 
 sandbox.setUniform("bg","bg.png");
@@ -405,7 +406,7 @@ window.requestAnimationFrame(tick)
 function update(delta){
     LightPos[0] = (TargetPos[0]-LightPos[0])*delta/500.0 + LightPos[0];
     LightPos[1] = (TargetPos[1]-LightPos[1])*delta/500.0 + LightPos[1];
-    mySlider = (Slider-mySlider)*delta/500.0  + mySlider;
+    mySlider = (Math.floor(Slider)-mySlider)*delta/500.0  + mySlider;
     sandbox.setUniform("_mouse",LightPos[0],LightPos[1]);
     sandbox.setUniform("Slider",mySlider);
 }
@@ -431,4 +432,5 @@ window.onresize = function(e){
     canvas.width = innerWidth;
     canvas.height = innerHeight;
     sandbox.setUniform("resolution",canvas.width,canvas.height);
+
 }
