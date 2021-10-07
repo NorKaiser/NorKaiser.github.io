@@ -32,6 +32,8 @@ const float Deg2Rad = 0.01745329251;
 
 uniform float Slider;
 
+const vec2 fog = vec2(4.,9.);
+
 vec3 rotate_z(vec3 org,float angle){
     angle *= Deg2Rad;
     float x = org.x*cos(angle) - org.y*sin(angle);
@@ -157,6 +159,28 @@ vec3 raytracePlane(vec3 pos,vec3 dir,vec3 rot,vec2 size){
     
     return vec3(dis,uv);
 }
+vec3 raytraceGround(vec3 pos,vec3 dir,float height){
+
+    pos-=vec3(0,height,0);
+    float dis = 999999.0;
+    
+    vec2 uv = vec2(0);
+    vec3 posTemp;
+    vec3 endTemp;
+    float disTemp;
+    
+    posTemp = pos;
+    disTemp = posTemp.y/-dir.y;
+    if(disTemp>0.0){
+        endTemp = posTemp + dir*disTemp;
+        if(disTemp<dis){
+            dis = disTemp;
+            uv = endTemp.xy+vec2(0.5);                
+        }
+    }
+    
+    return vec3(dis,uv);
+}
 vec4 raytraceCube(vec3 pos,vec3 dir,vec3 rot,vec3 size,int faceCut,inout int face,inout vec2 uv){
     pos = Rotate(pos,rot);
     dir = Rotate(dir,rot);
@@ -277,14 +301,28 @@ vec4 AlphaBlend(vec4 front,vec4 back){
     return front*front.w+back*(1.0-front.w);
 }
 vec4 Cube(vec3 pos,vec3 dir,vec3 cubePos,vec3 cubeRot,vec3 cubeSize,int cubeIndex,float planeRot,inout bool hit){
+
     int face;
     vec2 uv;
     vec4 raycastCube = raytraceCube(pos-cubePos,dir,cubeRot,cubeSize,-1,face,uv);
+    vec3 mypos=pos + raycastCube.x*dir;
+    float dis = raycastCube.x;
+    float alpha = 1.0;
+    vec3 raytraceGround = raytraceGround(pos,dir,-cubeSize.y*.5);
+    if(raytraceGround.x<raycastCube.x){
+        pos+=dir*raytraceGround.x;
+        dir = reflect(dir,vec3(0,1,0));
+        raycastCube = raytraceCube(pos-cubePos,dir,cubeRot,cubeSize,-1,face,uv);
+        mypos= pos + raycastCube.x*dir;
+        dis = (raytraceGround.x+raycastCube.x);
+        alpha = (1.0-(mypos.y+cubeSize.y*.5)/2.5)*0.2;
+    }
+    
     hit = raycastCube.x<999998.0;
     if(!hit)
         return vec4(0.);
     
-    vec4 reflectColor = getSky(reflect(dir,raycastCube.yzw))*2.0;
+    vec4 reflectColor = getSky(reflect(dir,raycastCube.yzw))*5.0;
     vec4 finalColor = vec4(0);
     for(int i=0;i!=3;i++){
         float myEta = _eta;
@@ -293,13 +331,12 @@ vec4 Cube(vec3 pos,vec3 dir,vec3 cubePos,vec3 cubeRot,vec3 cubeSize,int cubeInde
         if(i==2)
             myEta *= 1.0+dispersion;
         
-        vec3 mypos = pos;
         vec3 mydir = dir;
         float refelectRatio = fractmount(mydir,raycastCube.yzw,1.0/myEta);
         
         vec2 Myuv;
         int Myface;
-        mypos+=raycastCube.x*dir;
+
         mydir = refrect(mydir,raycastCube.yzw,1.0/myEta);
         
         
@@ -319,9 +356,9 @@ vec4 Cube(vec3 pos,vec3 dir,vec3 cubePos,vec3 cubeRot,vec3 cubeSize,int cubeInde
         if(Myface==2)
             insideColor = texture2D(topMap,Myuv);
         else if(Myface==3)
-            insideColor = texture2D(downMap,Myuv);
+            insideColor = texture2D(downMap,Myuv)*0.25;
         else{
-            insideColor = texture2D(sideMap,Myuv);
+            insideColor = texture2D(sideMap,Myuv)*0.25;
         }
         insideColor = AlphaBlend(frontColor,insideColor);
         
@@ -336,7 +373,8 @@ vec4 Cube(vec3 pos,vec3 dir,vec3 cubePos,vec3 cubeRot,vec3 cubeSize,int cubeInde
             finalColor += (reflectColor*(1.0-refelectRatio)+insideColor*(refelectRatio)) * vec4(0.,0.,1.,1.);
         }
     }
-    return vec4(finalColor.xyz,1);
+    dis = 1.0-clamp((dis-fog.x)/(fog.y-fog.x),0.,1.);
+    return vec4(finalColor.xyz*dis*alpha,1);
 }
 void main(void)
 {
@@ -344,7 +382,7 @@ void main(void)
     vec3 camAng = _camRot;
     
     vec2 mouse = _mouse.xy-vec2(.5);
-    camAng = vec3(camAng.x+(mouse.y)*20.0,camAng.y-(mouse.x)*30.0,camAng.z);
+    camAng += vec3((mouse.yx)*vec2(10.0,15.0),0);
     camPos = Rotate(camPos,camAng);
     float aspect = resolution.y/resolution.x;
     
@@ -355,10 +393,11 @@ void main(void)
 
     bool hit;
     float mySlider = mod(Slider,4.0);
+    
 
-    for(int i=-6;i!=3;i++){
-        vec3 mypos = vec3(2.0,0,0)*float(i);
-        mypos += vec3(2.0,0,0)*mySlider;
+    for(int i=2;i!=-7;i--){
+        vec3 mypos = vec3(1.5,0,-1.5)*float(i);
+        mypos += vec3(1.5,0,-1.5)*mySlider;
         
         vec3 myrot = _cubeRot + vec3(0.,1.,0)*(float(i)+mySlider)*-60.0;
         
@@ -374,8 +413,8 @@ sandbox.setUniform("resolution",canvas.width,canvas.height);
 sandbox.setUniform("_mouse",0.5,0.5);
 sandbox.setUniform("_camRot",0.0,0.0,0.0);
 sandbox.setUniform("_camPos",0.0,0.0,-4.3);
-sandbox.setUniform("_offset",0.0,0);
-sandbox.setUniform("_fov",80.0);
+sandbox.setUniform("_offset",-0.4,0.0);
+sandbox.setUniform("_fov",90.0);
 
 sandbox.setUniform("bg","bg.png");
 sandbox.setUniform("topMap","topMap.png");
