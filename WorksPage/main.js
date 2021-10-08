@@ -12,8 +12,8 @@ uniform vec2 _offset;
 uniform float _fov;
 uniform vec2 _mouse;
 
-const vec3 _cubeRot = vec3(0.,0.,0.);
-const vec3 _cubeSize = vec3(1.,2.5,1.);
+const vec3 _cubeRot = vec3(-90.,0.,0.);
+const vec3 _cubeSize = vec3(1.,1.,2.5);
 uniform sampler2D bg;
 const float _eta = 1.55;
 
@@ -23,7 +23,7 @@ uniform sampler2D topMap;
 uniform sampler2D logo;
 
 uniform sampler2D normalMap;
-const float normalMapHeight = 0.3;
+const float normalMapHeight = 0.5;
 
 const float dispersion = 0.05;
 
@@ -204,6 +204,7 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 rot,vec3 size,int faceCut,inout int fac
                     uv = endTemp.xy/size.xy+vec2(0.5);                
                     normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,-90.,0.)));
                     normal = lerp(vec3(0.,0.,1.)*sign(posTemp.z),normal,normalMapHeight);
+                    normal = vec3(0.,0.,1.)*sign(posTemp.z);
                     face = 0;
                 }
             }
@@ -221,6 +222,7 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 rot,vec3 size,int faceCut,inout int fac
                     uv = endTemp.xy/size.xy+vec2(0.5);
                     normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,90.,0.)));
                     normal = lerp(vec3(0.,0.,1.)*sign(posTemp.z),normal,normalMapHeight);
+                    normal = vec3(0.,0.,1.)*sign(posTemp.z);
                     face = 1;
                 }
             }
@@ -235,9 +237,10 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 rot,vec3 size,int faceCut,inout int fac
             if(endTemp.x>-.5*size.x && endTemp.x<.5*size.x && endTemp.z>-.5*size.z && endTemp.z<.5*size.z){
                 if(disTemp<dis){
                     dis = disTemp;
-                    uv = endTemp.xz/size.xz+vec2(0.5);
+                    uv = endTemp.zx/size.zx+vec2(0.5);
                     normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,0.,90.)));
                     normal = lerp(vec3(0.,1.,0.)*sign(posTemp.y),normal,normalMapHeight);
+                    //normal = vec3(0.,1.,0.)*sign(posTemp.y);
                     face = 2;
                 }
             }
@@ -252,9 +255,10 @@ vec4 raytraceCube(vec3 pos,vec3 dir,vec3 rot,vec3 size,int faceCut,inout int fac
             if(endTemp.x>-.5*size.x && endTemp.x<.5*size.x && endTemp.z>-.5*size.z && endTemp.z<.5*size.z){
                 if(disTemp<dis){
                     dis = disTemp;
-                    uv = endTemp.xz/size.xz+vec2(0.5);
+                    uv = endTemp.zx/size.zx+vec2(0.5);
                     normal = normalize(Rotate(texture2D(normalMap,uv).xyz-vec3(.5),vec3(0.,0.,-90.)));
                     normal = lerp(vec3(0.,1.,0.)*sign(posTemp.y),normal,normalMapHeight);
+                    //normal = vec3(0.,1.,0.)*sign(posTemp.y);
                     face = 3;
                 }
             }
@@ -308,7 +312,7 @@ vec4 Cube(vec3 pos,vec3 dir,vec3 cubePos,vec3 cubeRot,vec3 cubeSize,int cubeInde
     vec3 mypos=pos + raycastCube.x*dir;
     float dis = raycastCube.x;
     float alpha = 1.0;
-    vec3 raytraceGround = raytraceGround(pos,dir,-cubeSize.y*.5);
+    vec3 raytraceGround = raytraceGround(pos,dir,-1.25);
     if(raytraceGround.x<raycastCube.x){
         pos+=dir*raytraceGround.x;
         dir = reflect(dir,vec3(0,1,0));
@@ -348,7 +352,7 @@ vec4 Cube(vec3 pos,vec3 dir,vec3 cubePos,vec3 cubeRot,vec3 cubeSize,int cubeInde
         if(raytracePlane.x<999998.0){
             vec4 logoPixel = texture2D(logo,raytracePlane.yz);
             if(logoPixel.w>0.5){
-                frontColor = logoPixel;
+                frontColor = vec4(0,0,0,1);
             }
         }
 
@@ -399,7 +403,7 @@ void main(void)
         vec3 mypos = vec3(1.5,0,-1.5)*float(i);
         mypos += vec3(1.5,0,-1.5)*mySlider;
         
-        vec3 myrot = _cubeRot + vec3(0.,1.,0)*(float(i)+mySlider)*-60.0;
+        vec3 myrot = _cubeRot + vec3(0.,0.,1.)*(float(i)+mySlider)*-30.0;
         
         gl_FragColor = Cube(camPos,dir,mypos,myrot,_cubeSize,-1,-camAng.y,hit);
         if(hit)
