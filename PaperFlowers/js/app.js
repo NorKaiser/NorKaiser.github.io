@@ -1,4 +1,4 @@
-import * as THREE from '../three/build/three.module.js';
+import * as THREE from './three/build/three.module.js';
 import { shape } from './shape.js';
 import { shapeParameters } from './shapeParameters.js';
 import { cutComputeShader } from './cutComputeShader.js';
@@ -8,8 +8,8 @@ import { Mathf } from './Mathf.js';
 
 
 
-import { OBJLoader } from '../three/examples/jsm/loaders/OBJLoader.js';
-import { BasisTextureLoader } from '../three/examples/jsm/loaders/BasisTextureLoader.js';
+import { OBJLoader } from './three/examples/jsm/loaders/OBJLoader.js';
+import { BasisTextureLoader } from './three/examples/jsm/loaders/BasisTextureLoader.js';
 
 const Deg2Rad = 0.01745329222;
 var appId;
@@ -59,7 +59,7 @@ function load() {
     objUv2Pool.length = 3;
     objPool[0].length = 90;
     for (let i = 1; i <= 90; i++) {
-        loader.load('../obj/DodecagonShape/DodecagonShape_'.concat(i.toString()).concat('.obj'), function (object) {
+        loader.load('./obj/DodecagonShape/DodecagonShape_'.concat(i.toString()).concat('.obj'), function (object) {
             object.traverse(function (child) {
                 if (child.isMesh) {
                     objPool[0][i - 1] = child.geometry;
@@ -67,7 +67,7 @@ function load() {
             });
         });
     }
-    loader.load('../obj/DodecagonShape_uv.obj', function (object) {
+    loader.load('./obj/DodecagonShape_uv.obj', function (object) {
         object.traverse(function (child) {
             if (child.isMesh) {
                 objUv2Pool[0] = child.geometry.attributes.uv;
@@ -77,7 +77,7 @@ function load() {
 
     objPool[1].length = 90;
     for (let i = 1; i <= 90; i++) {
-        loader.load('../obj/OctagonShape/OctagonShape_'.concat(i.toString()).concat('.obj'), function (object) {
+        loader.load('./obj/OctagonShape/OctagonShape_'.concat(i.toString()).concat('.obj'), function (object) {
             object.traverse(function (child) {
                 if (child.isMesh) {
                     objPool[1][i - 1] = child.geometry;
@@ -85,7 +85,7 @@ function load() {
             });
         });
     }
-    loader.load('../obj/OctagonShape_uv.obj', function (object) {
+    loader.load('./obj/OctagonShape_uv.obj', function (object) {
         object.traverse(function (child) {
             if (child.isMesh) {
                 objUv2Pool[1] = child.geometry.attributes.uv;
@@ -95,7 +95,7 @@ function load() {
 
     objPool[2].length = 90;
     for (let i = 1; i <= 90; i++) {
-        loader.load('../obj/DecagonShape/DecagonShape_'.concat(i.toString()).concat('.obj'), function (object) {
+        loader.load('./obj/DecagonShape/DecagonShape_'.concat(i.toString()).concat('.obj'), function (object) {
             object.traverse(function (child) {
                 if (child.isMesh) {
                     objPool[2][i - 1] = child.geometry;
@@ -103,7 +103,7 @@ function load() {
             });
         });
     }
-    loader.load('../obj/DecagonShape_uv.obj', function (object) {
+    loader.load('./obj/DecagonShape_uv.obj', function (object) {
         object.traverse(function (child) {
             if (child.isMesh) {
                 objUv2Pool[2] = child.geometry.attributes.uv;
@@ -112,11 +112,11 @@ function load() {
     });
 
     basisloader = new BasisTextureLoader();
-    basisloader.setTranscoderPath('../three/examples/js/libs/basis/');
+    basisloader.setTranscoderPath('./three/examples/js/libs/basis/');
     basisloader.detectSupport(renderer);
-    frontMap = basisloader.load("../basis/front.basis");
-    backMap = basisloader.load("../basis/back.basis");
-    shapeMask = basisloader.load("../basis/shapeMask.basis");
+    frontMap = basisloader.load("./basis/front.basis");
+    backMap = basisloader.load("./basis/back.basis");
+    shapeMask = basisloader.load("./basis/shapeMask.basis");
 }
 
 var camera, camera_width, camera_height;
