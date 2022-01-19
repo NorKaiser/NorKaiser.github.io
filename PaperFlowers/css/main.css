@@ -1,0 +1,183 @@
+@charset "UTF-8";
+body {
+  padding: 0;
+  margin: 0;
+  background-image: url("../jpg/BG.jpg");
+  background-size: cover;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  -moz-user-select: none;
+  /*火狐*/
+  -webkit-user-select: none;
+  /*webkit浏览器*/
+  -ms-user-select: none;
+  /*IE10*/
+  /*早期浏览器*/
+  user-select: none;
+}
+
+.ui {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.ui .debug {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ui .debug p {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  color: #ffffff;
+}
+
+.ui .ChangeShape {
+  position: absolute;
+  right: 7vh;
+  bottom: 25vh;
+  width: 10vh;
+  height: 10vh;
+  -webkit-transform: rotate(45deg);
+          transform: rotate(45deg);
+  pointer-events: auto;
+  -webkit-transition: 1s cubic-bezier(0.31, 0, 0.24, 1);
+  transition: 1s cubic-bezier(0.31, 0, 0.24, 1);
+}
+
+.ui .ChangeShape.disable {
+  right: -25vh;
+  -webkit-transform: rotate(270deg);
+          transform: rotate(270deg);
+}
+
+.ui .Send {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: auto;
+  bottom: 5vh;
+  width: 41.25vh;
+  height: 10vh;
+  pointer-events: auto;
+  -webkit-transition: 1s cubic-bezier(0.31, 0, 0.24, 1);
+  transition: 1s cubic-bezier(0.31, 0, 0.24, 1);
+}
+
+.ui .Send.disable {
+  bottom: -15vh;
+}
+
+.ui .progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  height: 10px;
+  width: 50%;
+  border: 10px solid #f4a261;
+  border-radius: 15px;
+}
+
+.ui .progress .color {
+  position: absolute;
+  background-color: #ffffff;
+  width: 0%;
+  height: 10px;
+  border-radius: 15px;
+}
+
+.mouse_div {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  z-index: 1;
+}
+
+.mouse_div .mouse_cube {
+  position: fixed;
+  width: 10vh;
+  height: 10vh;
+  background-color: rgba(255, 255, 0, 0.25);
+  border-radius: 50%;
+}
+
+.mouse_div .cut_dot {
+  position: fixed;
+  width: 0.5vh;
+  height: 0.5vh;
+  background-color: white;
+  border-radius: 50%;
+}
+
+.wapper .hero {
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.wapper .hero canvas {
+  position: absolute;
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+  height: -webkit-max-content;
+  height: -moz-max-content;
+  height: max-content;
+  -webkit-filter: drop-shadow(0 0 10vh rgba(18, 22, 26, 0.548));
+          filter: drop-shadow(0 0 10vh rgba(18, 22, 26, 0.548));
+}
+
+.BG {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  pointer-events: none;
+}
+
+.BG .NewShape {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  margin: auto;
+  width: 50vh;
+  height: 50vh;
+  pointer-events: auto;
+  -webkit-transition: 1s cubic-bezier(0.31, 0, 0.24, 1);
+  transition: 1s cubic-bezier(0.31, 0, 0.24, 1);
+}
+
+.BG .NewShape.disable {
+  -webkit-transform: scale(0);
+          transform: scale(0);
+}
+/*# sourceMappingURL=main.css.map */
