@@ -2,4 +2,4 @@
 #!desc=Add New Rule Group For OpenAi.
 
 [Proxy Group]
-OpenAI = select, [Proxy]
+OpenAI = select, Proxy
