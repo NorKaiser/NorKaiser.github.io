@@ -1,0 +1,109 @@
+{
+    "b820ea11-02bf-4652-97ae-9ac0cc00593d": {
+        "name": "Leonardo Diffusion",
+        "id": "b820ea11-02bf-4652-97ae-9ac0cc00593d",
+        "sd_Version": "v2.1",
+        "training_Width": 1024,
+        "training_Height": 1024,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/8905a8f0-9219-43ad-8ecb-1c37b4501dc5/Leonardo_Diffusion_ultra_detailed_artistic_photography_of_a_fashion_moden_3.jpg?w=512"
+    },
+    "cd2b2a15-9760-4174-a5ff-4d2925057376": {
+        "name": "Leonardo Select",
+        "id": "cd2b2a15-9760-4174-a5ff-4d2925057376",
+        "sd_Version": "v2.1",
+        "training_Width": 768,
+        "training_Height": 768,
+        "image_src": "https://cdn.leonardo.ai/users/2e1f21ed-7ca4-4f78-80ed-1646ea463a01/generations/ff4e1c40-933a-47da-8c52-31689ed282d7/Leonardo_Select_portrait_of_female_character_wearing_80s_clothing_she_should_0.png?w=512"
+    },
+    "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3": {
+        "name": "Leonardo Creative",
+        "id": "6bef9f1b-29cb-40c7-b9df-32b51c1f67d3",
+        "sd_Version": "v2.1",
+        "training_Width": 768,
+        "training_Height": 768,
+        "image_src": "https://cdn.leonardo.ai/users/2e1f21ed-7ca4-4f78-80ed-1646ea463a01/generations/3665e729-cf65-4766-aebc-e351bc27e239/Leonardo_Creative_portrait_of_male_character_wearing_80s_clothing_he_should_lo_0.png?w=512"
+    },
+    "291be633-cb24-434f-898f-e662799936ad": {
+        "name": "Leonardo Signature",
+        "id": "291be633-cb24-434f-898f-e662799936ad",
+        "sd_Version": "v1.5",
+        "training_Width": 768,
+        "training_Height": 768,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/2956bf2a-3039-43ee-83d6-65318e5f58fa/Default_an_incredibly_stunning_photograph_of_a_throne_room_soft_light_3.png?w=512"
+    },
+    "b7aa9939-abed-4d4e-96c4-140b8c65dd92": {
+        "name": "DreamShaper v6",
+        "id": "b7aa9939-abed-4d4e-96c4-140b8c65dd92",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/8ab5c76a-eefb-4801-817f-458f68958db7/DreamShaperV6_a_masterpiece_image_of_Splash_art_music_album_ar_6.jpg?w=512"
+    },
+    "d2fb9cf9-7999-4ae5-8bfe-f0df2d32abf8": {
+        "name": "DreamShaper v5",
+        "id": "d2fb9cf9-7999-4ae5-8bfe-f0df2d32abf8",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/bb22942b-40c8-4a06-a219-238808053ee0/DreamShaper_v5_extremely_intricate_fantasy_character_photoreal_0.jpg?w=512"
+    },
+    "f3296a34-9aef-4370-ad18-88daf26862c3": {
+        "name": "DreamShaper 3.2",
+        "id": "f3296a34-9aef-4370-ad18-88daf26862c3",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/b2919072-7c52-409e-9c2a-11d56c5c2ed2/DreamShaper_32_Full_body_Beautiful_final_fantasy_style_portrait_clean_detai_2.jpg?w=512"
+    },
+    "a097c2df-8f0c-4029-ae0f-8fd349055e61": {
+        "name": "RPG 4.0",
+        "id": "a097c2df-8f0c-4029-ae0f-8fd349055e61",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/20cd8cca-ad36-46b1-a0e3-8bd669112017/RPG_portrait_painting_of_a_redhead_feminine_royal_woman_with_a_fe_3.jpg?w=512"
+    },
+    "5ca77967-9ef1-4709-b18e-b5d4c0449075": {
+        "name": "Cute Anime Girls 1.0",
+        "id": "5ca77967-9ef1-4709-b18e-b5d4c0449075",
+        "sd_Version": "v1.5",
+        "training_Width": 768,
+        "training_Height": 768,
+        "instance_Prompt": "smooth anime style",
+        "image_src": "https://cdn.leonardo.ai/users/ab0732f8-4ae5-4bd7-8822-e4f24758e7fb/generations/b340f423-f0fd-4733-9967-0fbe714c26d9/Cute_Anime_Girls_10_smooth_anime_style_white_castle_flying_over_the_clouds_in_5.jpg?w=512"
+    },
+    "f0b6a3ea-63e0-4651-8b19-5971f599b57e": {
+        "name": "Pro Anime Style Gen 2.0",
+        "id": "f0b6a3ea-63e0-4651-8b19-5971f599b57e",
+        "sd_Version": "v1.5",
+        "training_Width": 768,
+        "training_Height": 768,
+        "instance_Prompt": "Detailed anime style",
+        "image_src": "https://cdn.leonardo.ai/users/0639261d-3917-4a5c-8296-37b38607cf38/generations/2175dca4-4afe-482e-8c5c-272329611976/Pro_Anime_Style_Gen_11_ice_girl_tanned_elf_archer_blond_hair_nice_pose_depth_of_1.jpg?w=512"
+    },
+    "458ecfff-f76c-402c-8b85-f09f6fb198de": {
+        "name": "Deliberate 1.1",
+        "id": "458ecfff-f76c-402c-8b85-f09f6fb198de",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/da624520-f0c6-4afa-b171-9bfc3bbb27de/Deliberate_v11_waitress_pinup_art_style_kodak_portra_400_cinematic_smiling_0.jpg?w=512"
+    },
+    "17e4edbf-690b-425d-a466-53c816f0de8a": {
+        "name": "Vintage Style Photography",
+        "id": "17e4edbf-690b-425d-a466-53c816f0de8a",
+        "sd_Version": "v2.1",
+        "training_Width": 768,
+        "training_Height": 768,
+        "instance_Prompt": "vintage style",
+        "image_src": "https://cdn.leonardo.ai/users/4e397cdd-4af3-48e5-b0e7-c2b5d1ebee59/generations/7a6f17f3-689c-461d-9c59-14a7ac88fa0e/Vintage_Style_Photography_Classic_convertible_driving_on_an_open_road_vintage_style_2.jpg?w=512"
+    },
+    "e5a291b6-3990-495a-b1fa-7bd1864510a6": {
+        "name": "Pixel art",
+        "id": "e5a291b6-3990-495a-b1fa-7bd1864510a6",
+        "sd_Version": "v1.5",
+        "training_Width": 512,
+        "training_Height": 512,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/5628b06f-d989-4f89-87b2-9f7af4bb0ee7/Default_A_robotic_cat_with_glowing_eyes_and_sleek_metal_fur_0.png?w=512"
+    }
+}
