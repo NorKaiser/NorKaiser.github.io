@@ -8,7 +8,7 @@
         <beforeApplicationStartup />
       </update>
     </subscription>
-    <deploymentProvider codebase="https://norkaiser.github.io/tree/main/ChatApp/published/ChatApp.application" />
+    <deploymentProvider codebase="https://raw.githubusercontent.com/NorKaiser/Norkaiser.github.io/main/ChatApp/published/ChatApp.application" />
   </deployment>
   <compatibleFrameworks xmlns="urn:schemas-microsoft-com:clickonce.v2">
     <framework targetVersion="4.5" profile="Full" supportedRuntime="4.0.30319" />
