@@ -11,6 +11,8 @@ const endDiff = 1.5;
 const diffTimeScale = 120;
 const lookFreq = 0.01;
 const X2Time = 10;
+var Score = 0;
+var Distance = 0;
 
 let keyboard;
 const xVector = new Phaser.Math.Vector2(100 * Math.sqrt(2) / 8 * 2.5, -(100 * Math.sqrt(2) / 8 * 2.5) / Math.sqrt(3));
@@ -29,7 +31,6 @@ var nextInput = -1;
 var blocks = [];
 var booms = [];
 var x2s = 0;
-var Score = 0;
 var displayScore = 0;
 var power = startDiff;
 var currentDiff = startDiff;
@@ -43,6 +44,7 @@ var playerDying = false;
 var playerDied = false;
 var howToDie = 0;
 var afterLife = 0;
+var afterLifeOffset = 0;
 var endTime = -1;
 var realAfterLife = 0;
 var afterLifeHigh = 0;
@@ -54,6 +56,9 @@ var playerColor = [255, 201, 107];
 var playerRealColor = [255, 201, 107];
 var endMove = false;
 var X2TimeCount = 0;
+var generaNumberSound = [false, false, false, false, false, false, false, false];
+var restart = false;
+var dyingTouch = false;
 
 const startMoveSpeed = [[6, 0], [4, 0], [2, 0]];
 const endMoveSpeed = [[350, 0], [300, 0], [250, 0]];
@@ -109,6 +114,12 @@ function LerpVec(a, b, c) {
     let x = (b[0] - a[0]) * c + a[0];
     let y = (b[1] - a[1]) * c + a[1];
     return [x, y];
+}
+function Remap(t, a, b) {
+    return Clamp((t - a) / (b - a), 0, 1);
+}
+function Curve(t) {
+    return 1 - (1 - t) * (1 - t);
 }
 class MainGame extends Phaser.Scene {
     key = 'MainGame';
@@ -196,7 +207,8 @@ class MainGame extends Phaser.Scene {
 
         this.load.spritesheet('InfoText', 'img/InfoText.png', { frameWidth: 200, frameHeight: 64 });
 
-        this.load.spritesheet('EndingBoard', 'img/EndingBoard.png', { frameWidth: 112, frameHeight: 185 });
+        this.load.spritesheet('ScoreBoard', 'img/ScoreBoard.png', { frameWidth: 256, frameHeight: 128 });
+        this.load.spritesheet('ScoreBoardFont', 'img/ScoreBoardFont.png', { frameWidth: 128, frameHeight: 128 });
 
         this.load.image('Grid', 'img/Grid.png');
         this.load.image('GridMask', 'img/GridMask.png');
@@ -228,6 +240,17 @@ class MainGame extends Phaser.Scene {
         this.load.audio('Boom_1', 'aud/Boom_1.mp3');
         this.load.audio('Boom_2', 'aud/Boom_2.mp3');
 
+        this.load.audio('BreakDown_1', 'aud/BreakDown_1.mp3');
+        this.load.audio('BreakDown_2', 'aud/BreakDown_2.mp3');
+        this.load.audio('BreakDown_3', 'aud/BreakDown_3.mp3');
+        this.load.audio('BreakDown_4', 'aud/BreakDown_4.mp3');
+
+        this.load.audio('Swoosh_1', 'aud/Swoosh_1.mp3');
+        this.load.audio('Swoosh_2', 'aud/Swoosh_2.mp3');
+        this.load.audio('Swoosh_3', 'aud/Swoosh_3.mp3');
+        this.load.audio('Swoosh_4', 'aud/Swoosh_4.mp3');
+
+        this.load.audio('BGM_1', 'aud/BGM_1.mp3');
     }
 
     CalPos(Pos) {
@@ -526,16 +549,37 @@ class MainGame extends Phaser.Scene {
         })
 
 
-        this.anims.create({
-            key: 'EndingBoard',
-            frames: this.anims.generateFrameNumbers('EndingBoard', { start: 0, end: 9 }),
-            frameRate: 12,
+        /*this.anims.create({
+            key: 'ScoreBoard',
+            frames: this.anims.generateFrameNumbers('ScoreBoard', { start: 0, end: 19 }),
+            frameRate: 25,
             //repeat: -1
         })
+        this.anims.create({
+            key: 'TimeBoard',
+            frames: this.anims.generateFrameNumbers('ScoreBoard', { start: 20, end: 39 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'DistanceBoard',
+            frames: this.anims.generateFrameNumbers('ScoreBoard', { start: 40, end: 59 }),
+            frameRate: 25,
+            //repeat: -1
+        })
+        this.anims.create({
+            key: 'RetryBoard',
+            frames: this.anims.generateFrameNumbers('ScoreBoard', { start: 60, end: 79 }),
+            frameRate: 25,
+            //repeat: -1
+        })*/
 
 
     }
     resetGame() {
+        Score = 0;
+        Distance = 0;
+
         /*this.scene.start('MainGame')
         this.scene.stop();*/
         playerPos = new Phaser.Math.Vector2(10, (mapSize - 1) / 2);
@@ -548,6 +592,7 @@ class MainGame extends Phaser.Scene {
         timeCount = aniTime;
         nextInput = -1;
         afterLife = 0;
+        afterLifeOffset = 0;
         endTime = -1;
         realAfterLife = 0;
         afterLifeHigh = 0;
@@ -558,6 +603,9 @@ class MainGame extends Phaser.Scene {
         maxX2Num = 1;
         maxBlockNum = 240;
         endMove = true;
+        restart = false;
+        dyingTouch = false;
+        for (let i = 0; i < generaNumberSound.length; i++) { generaNumberSound[i] = false; }
 
 
         BGMoveSpeed = [[6, 0], [4, 0], [2, 0]];
@@ -583,16 +631,14 @@ class MainGame extends Phaser.Scene {
         this.BGGroundB.alpha = StartAlpha[1];
         this.BGGroundC.alpha = StartAlpha[2];
 
-        let i = 0;
-        while (i < blocks.length) {
-            blocks[i].destroy();
-            blocks.splice(i, 1);
+        while (0 < blocks.length) {
+            blocks[0].destroy();
+            blocks.splice(0, 1);
             //i++;
         }
-        i = 0;
-        while (i < booms.length) {
-            booms[i].destroy();
-            booms.splice(i, 1);
+        while (0 < booms.length) {
+            booms[0].destroy();
+            booms.splice(0, 1);
             //i++;
         }
 
@@ -602,17 +648,34 @@ class MainGame extends Phaser.Scene {
         comboTimeCount = 0;
 
         x2s = 0;
-        Score = 0;
         displayScore = 0;
         power = 30;
         currentDiff = 30;
-        gameStartTime = this.time.now/1000;
+        gameStartTime = this.time.now / 1000;
         gameTime = 0;
         blockSpawnTimeCount = 0;
         X2SpawnTimeCount = X2SpawnTime;
         playerDying = false;
         playerDied = false;
         howToDie = 0;
+
+        this.ScoreBoard.destroy();
+        this.TimeBoard.destroy();
+        this.DistanceBoard.destroy();
+        this.RetryBoard.destroy();
+
+        while (0 < this.ScoreNumber.length) {
+            this.ScoreNumber[0].destroy();
+            this.ScoreNumber.splice(0, 1);
+        }
+        while (0 < this.TimeNumber.length) {
+            this.TimeNumber[0].destroy();
+            this.TimeNumber.splice(0, 1);
+        }
+        while (0 < this.DistanceNumber.length) {
+            this.DistanceNumber[0].destroy();
+            this.DistanceNumber.splice(0, 1);
+        }
 
         this.PowerBar.visible = true;
         this.player.anims.play('Born', true);
@@ -638,16 +701,19 @@ class MainGame extends Phaser.Scene {
                     case 0:
                         this.player.anims.play('HighUp', true);
                         playerPos.x += 2;
+                        Distance += 2;
                         playerPosture = 2;
                         break;
                     case 1:
                         this.player.anims.play('Low01Up', true);
                         playerPos.x += 1;
+                        Distance += 1;
                         playerPosture = 1;
                         break;
                     case 2:
                         this.player.anims.play('Low02Up', true);
                         playerPos.x += 2;
+                        Distance += 2;
                         playerPosture = 0;
                         break;
                 }
@@ -659,16 +725,19 @@ class MainGame extends Phaser.Scene {
                     case 0:
                         this.player.anims.play('HighLeft', true);
                         playerPos.y += 2;
+                        Distance += 2;
                         playerPosture = 1;
                         break;
                     case 1:
                         this.player.anims.play('Low01Left', true);
                         playerPos.y += 2;
+                        Distance += 2;
                         playerPosture = 0;
                         break;
                     case 2:
                         this.player.anims.play('Low02Left', true);
                         playerPos.y += 1;
+                        Distance += 1;
                         playerPosture = 2;
                         break;
                 }
@@ -680,16 +749,19 @@ class MainGame extends Phaser.Scene {
                     case 0:
                         this.player.anims.play('HighDown', true);
                         playerPos.x -= 2;
+                        Distance += 2;
                         playerPosture = 2;
                         break;
                     case 1:
                         this.player.anims.play('Low01Down', true);
                         playerPos.x -= 1;
+                        Distance += 1;
                         playerPosture = 1;
                         break;
                     case 2:
                         this.player.anims.play('Low02Down', true);
                         playerPos.x -= 2;
+                        Distance += 2;
                         playerPosture = 0;
                         break;
                 }
@@ -701,16 +773,19 @@ class MainGame extends Phaser.Scene {
                     case 0:
                         this.player.anims.play('HighRight', true);
                         playerPos.y -= 2;
+                        Distance += 2;
                         playerPosture = 1;
                         break;
                     case 1:
                         this.player.anims.play('Low01Right', true);
                         playerPos.y -= 2;
+                        Distance += 2;
                         playerPosture = 0;
                         break;
                     case 2:
                         this.player.anims.play('Low02Right', true);
                         playerPos.y -= 1;
+                        Distance += 1;
                         playerPosture = 2;
                         break;
                 }
@@ -832,7 +907,7 @@ class MainGame extends Phaser.Scene {
         this.BGGroundC.alpha = StartAlpha[2];
         //this.BGGroundC.blendMode = 'ADD';
 
-        this.EndingBoard = this.add.image(0, h*0.5-h * 0.35-64, 'EndingBoard');
+        this.EndingBoard = this.add.image(0, h * 0.5 - h * 0.35 - 64, 'EndingBoard');
         this.EndingBoard.setScale(h * 0.7 / 185, h * 0.4 / 185);
         this.EndingBoard.setScrollFactor(0, 0);
         this.EndingBoard.visible = false;
@@ -851,6 +926,7 @@ class MainGame extends Phaser.Scene {
         this.UIContainer = this.add.container(w / 2, h / 2, [this.MainUI, this.KeyMap, this.EndingBoard].concat(this.ScoreMap));
         this.UIContainer.setScrollFactor(0, 0);
         this.UIContainer.setDepth(50 - playerPos.x - playerPos.x);
+        //this.UIContainer.alpha = 0;
 
 
 
@@ -891,6 +967,9 @@ class MainGame extends Phaser.Scene {
         //console.log(this.player.anims);
         this.updatePlayer();
         this.updateScore(1);
+
+        this.sound.play('BGM_1');
+
         this.player.on('animationcomplete', () => {
             if (playerDying) {
                 if (playerDying && playerDied) {
@@ -973,16 +1052,22 @@ class MainGame extends Phaser.Scene {
             //console.log(BGMoveRealSpeed);
             if ((pointer.leftButtonDown() || pointer.rightButtonDown())) {
                 if (playerDying) {
-                    this.cam.on('camerafadeoutcomplete', (camera) => {
-                        this.resetGame();
-                    });
-                    this.cam.fadeOut(1000);
+                    if (restart) {
+                        restart = false;
+                        dyingTouch = false;
+                        this.cam.on('camerafadeoutcomplete', (camera) => {
+                            this.resetGame();
+                        });
+                        this.cam.fadeOut(500);
+                    } else {
+                        dyingTouch = true;
+                    }
                     return;
                 }
                 this.DoKeyBoard(pointer);
             }
         });
-        this.input.on('pointerup', (pointer) => { this.KeyMap.setFrame(0); });
+        this.input.on('pointerup', (pointer) => { this.KeyMap.setFrame(0); dyingTouch = false; });
 
 
 
@@ -1267,7 +1352,7 @@ class MainGame extends Phaser.Scene {
     updateCamera(delta) {
         CameraPos.lerp(playerPos, 1 * delta / 1000);
         let c = this.CalPos(CameraPos);
-        this.cam.centerOn(c.x, c.y - realAfterLife);
+        this.cam.centerOn(c.x, c.y - realAfterLife * 1.4);
 
 
         this.GridMask.x = c.x;
@@ -1535,6 +1620,8 @@ class MainGame extends Phaser.Scene {
         } else {
             this.player.anims.play(DieAnimsB[playerPosture], true);
         }
+        this.sound.play('BreakDown_' + Phaser.Math.Between(1, 4).toString());
+
         this.PowerBar.visible = false;
 
         this.playerAfterLife.x = this.player.x;
@@ -1554,8 +1641,168 @@ class MainGame extends Phaser.Scene {
             newDyingEffect.destroy();
         })*/
         endTime = gameTime;
+        realAfterLife = 0;
+        afterLife = 0;
+
+        /*this.player = this.add.sprite(w / 2, h / 2, 'HighIdel')
+        this.player.setScale(2.5);
+        this.player.anims.play('Born', true);*/
+
+        this.ScoreBoard = this.add.sprite(0, 0, 'ScoreBoard');
+        this.TimeBoard = this.add.sprite(0, 0, 'ScoreBoard');
+        this.DistanceBoard = this.add.sprite(0, 0, 'ScoreBoard');
+        this.RetryBoard = this.add.sprite(0, 0, 'ScoreBoard');
+
+        this.ScoreNumber = [];
+        for (let i = 0; i < Score.toString().length; i++) {
+            this.ScoreNumber[i] = this.add.sprite(0, 0, 'ScoreBoardFont', 0);
+        }
+
+        this.TimeNumber = [];
+        for (let i = 0; i < endTime.toString().length; i++) {
+            this.TimeNumber[i] = this.add.sprite(0, 0, 'ScoreBoardFont', 0);
+        }
+
+        this.DistanceNumber = [];
+        for (let i = 0; i < Distance.toString().length; i++) {
+            this.DistanceNumber[i] = this.add.sprite(0, 0, 'ScoreBoardFont', 0);
+        }
+
+
+        /*this.ScoreBoard.anims.play('ScoreBoard',true);
+        this.TimeBoard.anims.play('TimeBoard',true);
+        this.DistanceBoard.anims.play('DistanceBoard',true);
+        this.RetryBoard.anims.play('RetryBoard',true);*/
+        this.UIContainer.add([this.ScoreBoard, this.TimeBoard, this.DistanceBoard, this.RetryBoard]);
+        this.UIContainer.add(this.ScoreNumber);
+        this.UIContainer.add(this.TimeNumber);
+        this.UIContainer.add(this.DistanceNumber);
+
+
         playerDied = true;
     }
+    makeNumber(myTime, XPos, YPos, Target, boardSize, numberSize, NumberArray, Step, Dir) {
+        let startColor = [116, 144, 204];
+        let endColor = [255, 162, 99];
+        let finalColor = [255, 102, 102];
+        //let ScoreBoardNumberTimes = [0.4, 0.85];
+        //let ScoreBoardNumberTimeFrac = Remap(timeFrac, ScoreBoardNumberTimes[0], ScoreBoardNumberTimes[1]);
+        let TempScore = (Math.ceil(Lerp(0, Target, myTime))).toString();
+        let NumberSize = boardSize * numberSize * Lerp(1, 1.2, Curve(Remap(myTime, 0.95, 1)));
+        let nowColor = ColorLerp(ColorLerp(startColor, endColor, myTime), finalColor, Curve(Remap(myTime, 0.95, 1)));
+        for (let i = 0; i < NumberArray.length; i++) {
+            if (myTime == 0) {
+                NumberArray[i].visible = false;
+                continue;
+            }
+            if (i < TempScore.length) {
+                NumberArray[i].setFrame(Number(TempScore[i]) + 13 * (Dir ? 1 : 0));
+                let posIndex = i - ((TempScore.length - 1) / 2);
+                NumberArray[i].x = XPos - Step.x * posIndex * NumberSize * 1.2;
+                NumberArray[i].y = YPos - 80 * NumberSize - Step.y * posIndex * NumberSize * 1.2;
+                NumberArray[i].visible = true;
+                NumberArray[i].setScale(NumberSize);
+                NumberArray[i].setTint(getColor(nowColor[0], nowColor[1], nowColor[2]));
+            } else {
+                NumberArray[i].visible = false;
+            }
+
+        }
+    }
+    updateScoreBoard(afterLife, delay, fulltime) {
+        let BoardSize = h * 0.9 / 4 / 128;
+        this.ScoreBoard.setScale(BoardSize);
+        this.TimeBoard.setScale(BoardSize);
+        this.DistanceBoard.setScale(BoardSize);
+        this.RetryBoard.setScale(BoardSize);
+
+        let ScorePos = 0.86;
+        let TimePos = 0.59;
+        let DistancePos = 0.32;
+        let RetryPos = 0.05;
+
+        let timeFrac = Clamp((afterLife - delay) / fulltime, 0, 1);
+        restart = timeFrac >= 1;
+        let StepA = this.CalVec(-Math.cos(55 * Math.PI / 180), Math.sin(55 * Math.PI / 180));
+        let StepB = this.CalVec(-Math.cos(35 * Math.PI / 180), Math.sin(35 * Math.PI / 180));
+        //console.log(Lerp(h / 2 + 64, 0, timeFrac));
+
+        if (timeFrac > 0 && !generaNumberSound[4]) {
+            this.sound.play('Swoosh_1');
+            generaNumberSound[4] = true;
+        }
+        let ScoreBoardTimes = [0, 0.3];
+        let ScoreBoardStartY = h / 2 + 64 * BoardSize;
+        let ScoreBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, ScorePos);
+        this.ScoreBoard.y = Lerp(ScoreBoardStartY, ScoreBoardEndY, Curve(Remap(timeFrac, ScoreBoardTimes[0], ScoreBoardTimes[1])));
+        this.ScoreBoard.setFrame(Math.floor(Remap(timeFrac, ScoreBoardTimes[0], ScoreBoardTimes[1]) * 19.99));
+
+        let ScoreBoardNumberTimes = [0.3, 0.7];
+        let ScoreBoardNumberTimeFrac = Remap(timeFrac, ScoreBoardNumberTimes[0], ScoreBoardNumberTimes[1]);
+        this.makeNumber(ScoreBoardNumberTimeFrac, this.ScoreBoard.x, this.ScoreBoard.y, Score, BoardSize, 0.55, this.ScoreNumber, StepA, false);
+        if (timeFrac > 0.7 && !generaNumberSound[0]) {
+            this.sound.play('MagicExplosion_1');
+            generaNumberSound[0] = true;
+        }
+
+        if (timeFrac > 0.1 && !generaNumberSound[5]) {
+            this.sound.play('Swoosh_2');
+            generaNumberSound[5] = true;
+        }
+        let TimeBoardTimes = [0.1, 0.4];
+        let TimeBoardStartY = h / 2 + 64 * BoardSize;
+        let TimeBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, TimePos);
+        this.TimeBoard.y = Lerp(TimeBoardStartY, TimeBoardEndY, Curve(Remap(timeFrac, TimeBoardTimes[0], TimeBoardTimes[1])));
+        this.TimeBoard.setFrame(Math.floor(Remap(timeFrac, TimeBoardTimes[0], TimeBoardTimes[1]) * 19.99) + 20);
+
+        let TimeBoardNumberTimes = [0.4, 0.8];
+        let TimeBoardNumberTimeFrac = Remap(timeFrac, TimeBoardNumberTimes[0], TimeBoardNumberTimes[1]);
+        this.makeNumber(TimeBoardNumberTimeFrac, this.TimeBoard.x, this.TimeBoard.y, endTime, BoardSize, 0.43, this.TimeNumber, StepB, true);
+        if (timeFrac > 0.8 && !generaNumberSound[1]) {
+            this.sound.play('MagicExplosion_3');
+            generaNumberSound[1] = true;
+        }
+
+        if (timeFrac > 0.2 && !generaNumberSound[6]) {
+            this.sound.play('Swoosh_3');
+            generaNumberSound[6] = true;
+        }
+        let DistanceBoardTimes = [0.2, 0.5];
+        let DistanceBoardStartY = h / 2 + 64 * BoardSize;
+        let DistanceBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, DistancePos);
+        this.DistanceBoard.y = Lerp(DistanceBoardStartY, DistanceBoardEndY, Curve(Remap(timeFrac, DistanceBoardTimes[0], DistanceBoardTimes[1])));
+        this.DistanceBoard.setFrame(Math.floor(Remap(timeFrac, DistanceBoardTimes[0], DistanceBoardTimes[1]) * 19.99) + 40);
+
+        let DistanceBoardNumberTimes = [0.5, 0.9];
+        let DistanceBoardNumberTimeFrac = Remap(timeFrac, DistanceBoardNumberTimes[0], DistanceBoardNumberTimes[1]);
+        this.makeNumber(DistanceBoardNumberTimeFrac, this.DistanceBoard.x, this.DistanceBoard.y, Distance, BoardSize, 0.43, this.DistanceNumber, StepA, false);
+        if (timeFrac > 0.9 && !generaNumberSound[2]) {
+            this.sound.play('MagicExplosion_2');
+            generaNumberSound[2] = true;
+        }
+
+        if (timeFrac > 0.3 && !generaNumberSound[7]) {
+            this.sound.play('Swoosh_4');
+            generaNumberSound[7] = true;
+        }
+        let RetryBoardTimes = [0.3, 0.6];
+        let RetryBoardStartY = h / 2 + 64 * BoardSize;
+        let RetryBoardEndY = Lerp(h / 2 - 64 * BoardSize, -h / 2 + 64 * BoardSize, RetryPos);
+        this.RetryBoard.y = Lerp(RetryBoardStartY, RetryBoardEndY, Curve(Remap(timeFrac, RetryBoardTimes[0], RetryBoardTimes[1])));
+        this.RetryBoard.setFrame(Math.floor(Remap(timeFrac, RetryBoardTimes[0], RetryBoardTimes[1]) * 19.99) + 60);
+
+        let RetryScaleTime = Curve(Remap(timeFrac, 0.95, 1));
+        let RetryColor = ColorLerp([200, 200, 200], [255, 255, 255], RetryScaleTime);
+        this.RetryBoard.setTint(getColor(RetryColor[0], RetryColor[1], RetryColor[2]));
+        this.RetryBoard.setScale(BoardSize * Lerp(1, 1.2, RetryScaleTime));
+        if (timeFrac >= 1 && !generaNumberSound[3]) {
+            this.sound.play('X2Effect_1');
+            generaNumberSound[3] = true;
+        }
+
+        //this.PowerBar.setTexture('Power', Math.min(Math.floor((1 - power / currentDiff) * 64), 63));
+    }
+
     update(time, delta) {
         realAfterLife = (afterLife - realAfterLife) * 50 / delta / 1000 + realAfterLife;
         //realAfterLife = afterLife
@@ -1571,8 +1818,11 @@ class MainGame extends Phaser.Scene {
             }
         }
         if (playerDying) {
-            power = Lerp(power, currentDiff, 1 * delta / 1000);
-            afterLife = (gameTime - endTime) * 200;
+            //power = Lerp(power, currentDiff, 1 * delta / 1000);
+            afterLifeOffset += (dyingTouch ? (delta * 2 / 1000) : 0);
+            afterLife = (gameTime - endTime + afterLifeOffset) * 200;
+
+            //afterLife += endTime + delta / 1000;
 
             this.MainUI.y = 64 - h / 2 - realAfterLife;
             this.KeyMap.y = h * (1 - (1 - controlPanle) / 2) - h / 2 + realAfterLife * 4;
@@ -1583,21 +1833,26 @@ class MainGame extends Phaser.Scene {
 
             this.playerAfterLife.alpha = Clamp(realAfterLife / 200, 0, 1);
             this.BGBlack.alpha = 1 - Clamp(realAfterLife / 600, 0, 1);
-            let playerAfterLifeFactor = (1 - Math.cos(Clamp(realAfterLife / 800, 0, 1) * Math.PI)) * 0.5;
-            this.playerAfterLife.y = afterLifeZero - realAfterLife - playerAfterLifeFactor * (0.5 * h - 256) / this.cam.zoom;
+            let playerAfterLifeFactor = (1 - Math.cos(Clamp(realAfterLife / 2500, 0, 1) * Math.PI)) * 0.5;
+            this.playerAfterLife.y = afterLifeZero - realAfterLife * 1.4 - playerAfterLifeFactor * h / this.cam.zoom;
             this.StarSky.alpha = Clamp((realAfterLife - 1000) / 500, 0, 1);
 
             this.BGGroundA.alpha = Lerp(StartAlpha[0], EndAlpha[0], Clamp((realAfterLife - 1000) / 500, 0, 0.6));
             this.BGGroundB.alpha = Lerp(StartAlpha[0], EndAlpha[1], Clamp((realAfterLife - 1000) / 500, 0, 0.8));
             this.BGGroundC.alpha = Lerp(StartAlpha[0], EndAlpha[2], Clamp((realAfterLife - 1000) / 500, 0, 1));
-        }
-        if (power > 0) {
-            power -= delta / 1000;
+
+            if (playerDied) {
+                this.updateScoreBoard(afterLife, 800, 550);
+            }
         } else {
-            power = 0;
-            playerDying = true;
-            howToDie = 1;
-            //console.log('Die!');
+            if (power > 0) {
+                power -= delta / 1000;
+            } else {
+                power = 0;
+                playerDying = true;
+                howToDie = 1;
+                //console.log('Die!');
+            }
         }
         this.PowerBar.setTexture('Power', Math.min(Math.floor((1 - power / currentDiff) * 64), 63));
 
