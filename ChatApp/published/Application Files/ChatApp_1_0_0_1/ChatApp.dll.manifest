@@ -81,13 +81,13 @@
       <dsig:DigestValue>Y/vTW/7dOZl9qy19G2ZCKwxG2rDMq3HBEtn15cMPDuk=</dsig:DigestValue>
     </hash>
   </file>
-  <file name="ChatApp.dll" size="402944">
+  <file name="ChatApp.dll" size="403968">
     <hash>
       <dsig:Transforms>
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-      <dsig:DigestValue>XEwUJ79pkvJ8iDWEBVzldgNjVJUQCmy1RAv1JUmGzBs=</dsig:DigestValue>
+      <dsig:DigestValue>pFMHlRSDmE0KNWEc8lV8oR+1i8H2ZWYhisVZ04rYiSM=</dsig:DigestValue>
     </hash>
   </file>
   <file name="ChatApp.exe" size="354816">
