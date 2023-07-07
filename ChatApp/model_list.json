@@ -31,6 +31,30 @@
         "training_Height": 768,
         "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/2956bf2a-3039-43ee-83d6-65318e5f58fa/Default_an_incredibly_stunning_photograph_of_a_throne_room_soft_light_3.png?w=512"
     },
+    "e316348f-7773-490e-adcd-46757c738eb7": {
+        "name": "Absolute Reality v1.6",
+        "id": "e316348f-7773-490e-adcd-46757c738eb7",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/9d7e2dbe-6dff-4bf5-b487-414dee2a10b9/Absolute_Reality_v16_a_stunning_photo_of_a_woman_with_aztech_t_1.jpg?w=512"
+    },
+    "d69c8273-6b17-4a30-a13e-d6637ae1c644": {
+        "name": "3D Animation Style",
+        "id": "d69c8273-6b17-4a30-a13e-d6637ae1c644",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/0e85d140-3ea0-4179-a708-ae95bf9329a3/3D_Animation_Style_a_masterpiece_image_of_an_older_tired_and_b_2.jpg?w=512"
+    },
+    "ac614f96-1082-45bf-be9d-757f2d31c174": {
+        "name": "DreamShaper v7",
+        "id": "ac614f96-1082-45bf-be9d-757f2d31c174",
+        "sd_Version": "v1.5",
+        "training_Width": 640,
+        "training_Height": 832,
+        "image_src": "https://cdn.leonardo.ai/users/384ab5c8-55d8-47a1-be22-6a274913c324/generations/eb803073-c6ad-4f74-beaf-cb53d76dc737/DreamShaper_v7_a_masterpiece_image_of_an_older_tired_and_battl_2.jpg?w=512"
+    },
     "b7aa9939-abed-4d4e-96c4-140b8c65dd92": {
         "name": "DreamShaper v6",
         "id": "b7aa9939-abed-4d4e-96c4-140b8c65dd92",
