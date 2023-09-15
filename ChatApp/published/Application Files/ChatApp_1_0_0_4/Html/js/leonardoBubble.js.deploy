@@ -1,0 +1,1095 @@
+class leonardoBubble {
+    constructor(id, chatID, request, isactive) {
+        console.log("leonardoBubble: " + id);
+        isactive = isactive == 'true';
+
+        this.id = id;
+        this.chatID = chatID;
+        this.request = request;
+        this.expand = !isactive;
+        this.showModelOptions = false;
+        this.showControlNetOptions = false;
+
+        this.div = document.createElement('div');
+        this.div.classList.add('leonardo');
+        this.div.classList.add('bubble');
+        this.div.id = this.id;
+
+        this.content_div = document.createElement('div');
+        this.content_div.className = 'content';
+        this.imageholder_div = document.createElement('div');
+        this.imageholder_div.className = 'imageholder';
+
+        this.spinner_div = document.createElement('div');
+        this.spinner_div.className = 'spinner';
+        this.addClass(this.spinner_div, 'hide');
+        this.timer_div = document.createElement('p');
+        this.timer_div.className = 'timer';
+        this.addClass(this.timer_div, 'hide');
+
+        this.org_img = document.createElement('img');
+        this.org_img.className = 'org_img';
+        this.org_img.classList.add('hide');
+        this.org_img.crossOrigin = "anonymous";
+        this.upscale_img = document.createElement('img');
+        this.upscale_img.className = 'upscale_img';
+        this.upscale_img.classList.add('hide');
+        this.upscale_img.crossOrigin = "anonymous";
+        this.upscale_img_icon = document.createElement('div');
+        this.upscale_img_icon.className = 'upscale_img_icon';
+        this.upscale_img_icon.classList.add('hide');
+        this.upscale_img_icon.innerHTML = upscale_svg;
+
+        this.empty_div = document.createElement('div');
+        this.empty_div.classList.add('empty_icon');
+        this.empty_div.innerHTML = empty_svg;
+
+        this.error_div = document.createElement('div');
+        this.error_div.classList.add('error_icon');
+        this.error_div.classList.add('hide');
+        this.error_div.innerHTML = error_image_svg;
+
+        this.retry_div = document.createElement('div');
+        this.retry_div.classList.add('retry_icon');
+        this.retry_div.classList.add('hide');
+        this.retry_div.innerHTML = regenerate_svg;
+        this.retry_div.addEventListener('click', this.reTry.bind(this));
+
+        this.error_info = document.createElement('p');
+        this.error_info.classList.add('error_info');
+        this.error_info.classList.add('hide');
+
+        this.imageholder_div.appendChild(this.spinner_div);
+        this.imageholder_div.appendChild(this.org_img);
+        this.imageholder_div.appendChild(this.upscale_img);
+        this.imageholder_div.appendChild(this.upscale_img_icon);
+        this.imageholder_div.appendChild(this.empty_div);
+        this.imageholder_div.appendChild(this.error_div);
+        this.imageholder_div.appendChild(this.retry_div);
+        this.imageholder_div.appendChild(this.error_info);
+        this.imageholder_div.appendChild(this.timer_div);
+
+        this.request_div = document.createElement('div');
+        this.request_div.className = 'request';
+        this.request_div.innerHTML = `
+                    <div class='prompt_warpper'>
+                        <div class='model'>
+                            <label>Model:</label>
+                            <div class='modelSelectContainer'>
+                                <div style='    
+                                    position: absolute;
+                                    width: 424px;
+                                    height: 48px;
+                                    pointer-events: none;
+                                    '>
+                                    <img class='modelSelectImage'></img>
+                                </div>
+                                <div class='training_resolution' style='    
+                                    position: absolute;
+                                    pointer-events: none;
+                                    left: 10px;
+                                    top: 3px;
+                                    font-size: 5px;
+                                    '>
+                                </div>
+                                <div class='sd_Version' style='    
+                                    position: absolute;
+                                    pointer-events: none;
+                                    left: 10px;
+                                    bottom: 3px;
+                                    font-size: 5px;
+                                    '>
+                                </div>
+                                <div class='dropDownIcon' style='    
+                                    position: absolute;
+                                    width: 25px;
+                                    height: 25px;
+                                    pointer-events: none;
+                                    right: 11.5px;
+                                    top: 11.5px;
+                                    '>
+                                </div>
+                                <button class='modelSelect' selectedIndex=0 style='
+                                    width: 100%;
+                                    height: 48px;
+                                    background-color: #00000000;
+                                    color: white;
+                                    border: 0px;
+                                    border-radius: 8px;
+                                    text-align: center;
+                                    padding: 10px;
+                                    font-size: 16px;
+                                    line-height: 1.75;
+                                    cursor:pointer;
+                                    position: absolute;
+                                    text-shadow: 0 0 2px black, 0 0 2px black, 0 0 20px black, 0 0 20px black, 0 0 20px black, 0 0 20px black;
+                                '>
+                                    Selected
+                                </button>
+                                <div class='modelOptions'>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='prompt'>
+                            <label>Prompt:</label>
+                            <div class='container'>
+                                <textarea maxlength="1000" class="promptInput textinput" rows="1"></textarea>
+                                <button class='translateBtn forPrompt TopBtn' style='right:45px'></button>
+                                <button class='copyBtn forPrompt TopBtn' style='right:25px'></button>
+                                <button class='deleteBtn forPrompt TopBtn'></button>
+                            </div>
+                            <label>Negative Prompt:</label>
+                            <div class='container'>
+                                <textarea maxlength="1000" class="negPromptInput textinput" rows="1"></textarea>
+                                <button class='translateBtn forNegPrompt TopBtn' style='right:45px'></button>
+                                <button class='copyBtn forNegPrompt TopBtn' style='right:25px'></button>
+                                <button class='deleteBtn forNegPrompt TopBtn'></button>
+                            </div>
+                        </div>
+                        <div class='parameter'>
+                            <div class='resolution'>
+                                <div class='sliderContainer' style='
+                                    width: 424px;
+                                    margin: 20px auto 20px auto;
+                                    display: flex;
+                                    flex-direction: row;
+                                    justify-content: space-between;
+                                    '>
+                                    <label class='widthLabel'>Width: 512px</label>
+                                    <input class='widthSlider' type='range' min='32' max='1024' value='512' step='8'
+                                        style='width: 50vw'>
+                                </div>
+                                <div class='sliderContainer' style='
+                                    width: 424px;
+                                    margin: 20px auto 20px auto;
+                                    display: flex;
+                                    flex-direction: row;
+                                    justify-content: space-between;
+                                    '>
+                                    <label class='heightLabel'>Height: 512px</label>
+                                    <input class='heightSlider' type='range' min='32' max='1024' value='512' step='8'
+                                        style='width: 50vw'>
+                                </div>
+                            </div>
+                            <div style='
+                                width: 424px;
+                                margin: 20px auto 0 auto;
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: space-between;
+                                '>
+                                <div style='
+                                    display: flex;
+                                    flex-direction: row;
+                                    justify-content: space-between;
+                                    '>
+                                    <label>MagicWords:</label>
+                                    <input class='magicWordsCheckbox toogleinput' type='checkbox'>
+                                    <label class='magicWordsLabel tooglelabel'></label>
+                                </div>
+                                <div style='
+                                    display: flex;
+                                    flex-direction: row;
+                                    justify-content: space-between;
+                                    '>
+                                    <label>PromptMagic:</label>
+                                    <input class='promptMagicCheckbox toogleinput' type='checkbox'>
+                                    <label class='promptMagicLabel tooglelabel'></label>
+                                </div>
+                                <div style='
+                                    display: flex;
+                                    flex-direction: row;
+                                    justify-content: space-between;
+                                    '>
+                                    <label>Tiling:</label>
+                                    <input class='tilingCheckbox toogleinput' type='checkbox'>
+                                    <label class='tilingLabel tooglelabel'></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class='sliderContainer promptMagicStrengthContainer' style='
+                                    width: 424px;
+                                    margin-right: auto;
+                                    margin-bottom: 0px;
+                                    margin-left: auto;
+                                    display: flex;
+                                    flex-direction: row;
+                                    justify-content: space-between;
+                                    transition: opacity 0.2s, height 0.2s, margin-top 0.2s;
+                                    '>
+                            <label class='promptMagicStrengthLabel'>PM Strength: 0.4</label>
+                            <input class='promptMagicStrengthSlider' type='range' min='0.1' max='0.8' value='0.4'
+                                step='0.01' style='width: 50vw'>
+                        </div>
+                        <div class='img2img_div'>
+                            <div class='img_div'>
+                                <button class='img2imgBtn upload'>
+                                    <div class='initImgPreview'>
+                                        <img></img>
+                                    </div>
+                                    <Label style='
+                                        cursor: pointer;
+                                        z-index: 2;
+                                        '>
+                                        Upload am ImitImage
+                                    </Label>
+                                    <div style='width: 24px;height: 24px;z-index: 2;'>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                            <path
+                                                d="M16 3.59375L15.28125 4.28125L8.28125 11.28125L9.71875 12.71875L15 7.4375L15 24L17 24L17 7.4375L22.28125 12.71875L23.71875 11.28125L16.71875 4.28125 Z M 7 26L7 28L25 28L25 26Z"
+                                                fill="#FFFFFF" />
+                                        </svg>
+                                    </div>
+                                </button>
+                                <button class='img2imgBtn remove' style='border-radius: 0 8px 8px 0;'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                        <path
+                                            d="M7.21875 5.78125L5.78125 7.21875L14.5625 16L5.78125 24.78125L7.21875 26.21875L16 17.4375L24.78125 26.21875L26.21875 24.78125L17.4375 16L26.21875 7.21875L24.78125 5.78125L16 14.5625Z"
+                                            fill="#FFFFFF" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class='controlNetContainer' style='
+                                width: 424px;
+                                margin: 20px auto 20px auto;
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: space-between;
+                                '>
+                                <div class="controlNetOptions"><div>None</div><div>Pose</div><div>Edge</div><div>Depth</div></div>
+                                <label class='controlNetLabel'>ControlNet:</label>
+                                <button class='controlNetSelect'>
+                                    None
+                                </button>
+                            </div>
+                            <div class='sliderContainer initStrengthContainer' style='
+                                    width: 424px;
+                                    margin: 20px auto 0 auto;
+                                    display: flex;
+                                    flex-direction: row;
+                                    justify-content: space-between;
+                                    '>
+                                <label class='initStrengthLabel'>Init Strength: 0.4</label>
+                                <input class='initStrengthSlider' type='range' min='0.0' max='0.9' value='0.4'
+                                    step='0.01' style='width: 50vw'>
+                            </div>
+                        </div>
+                        <div style='
+                            width: 100%;
+                            margin: 20px auto 0 auto;
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: space-between;
+                            '>
+                            <button class='upscaleBtn BigBtn' style='
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: space-around;
+                                align-items: center;
+                                '>
+                                <div class='upscaleBtn_icon' style='height: 20px;width: 20px;'>
+                                </div>
+                                Upscale
+                            </button>
+                            <button class='downloadBtn BigBtn' style='
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: space-around;
+                                align-items: center;
+                                '>
+                                <div class='downloadBtn_icon' style='height: 20px;width: 20px;'>
+                                </div>
+                                DownLoad
+                            </button>
+                            <button class='generateBtn BigBtn' style='
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: space-around;
+                                align-items: center;
+                                '>
+                                <div class='generateBtn_icon' style='height: 20px;width: 20px;'>
+                                </div>
+                                Generate
+                            </button>
+                        </div>
+                    </div>`;
+        this.prompt_warpper = this.request_div.querySelector('.prompt_warpper');
+        this.prompt_input = this.request_div.querySelector('.promptInput');
+        this.negPrompt_input = this.request_div.querySelector('.negPromptInput');
+        this.promptMagic_checkbox = this.request_div.querySelector('.promptMagicCheckbox');
+        this.tiling_checkbox = this.request_div.querySelector('.tilingCheckbox');
+        this.magicWords_checkbox = this.request_div.querySelector('.magicWordsCheckbox');
+        this.width_slider = this.request_div.querySelector('.widthSlider');
+        this.height_slider = this.request_div.querySelector('.heightSlider');
+        this.model_slect = this.request_div.querySelector('.modelSelect');
+        this.model_slect_image = this.request_div.querySelector('.modelSelectImage');
+        this.training_resolution = this.request_div.querySelector('.training_resolution');
+        this.sd_Version = this.request_div.querySelector('.sd_Version');
+        this.model_options = this.request_div.querySelector('.modelOptions');
+        this.img2img_div = this.request_div.querySelector('.img2img_div');
+        this.img_div = this.request_div.querySelector('.img_div');
+        this.initImageUploadBtn = this.request_div.querySelector('.img2img_div .img2imgBtn.upload');
+        this.initImagePreview = this.request_div.querySelector('.img2img_div .initImgPreview img');
+        this.initImageLabel = this.request_div.querySelector('.img2img_div .img2imgBtn.upload label');
+        this.initImageRemoveBtn = this.request_div.querySelector('.img2img_div .img2imgBtn.remove');
+        this.initStrengthLabel = this.request_div.querySelector('.initStrengthLabel');
+        this.initStrengthSlider = this.request_div.querySelector('.initStrengthSlider');
+        this.controlNetSelect = this.request_div.querySelector('.controlNetSelect');
+        this.controlNetOptions = this.request_div.querySelector('.controlNetOptions');
+        this.promptMagicStrengthContainer = this.request_div.querySelector('.promptMagicStrengthContainer');
+        this.promptMagicStrengthLabel = this.request_div.querySelector('.promptMagicStrengthLabel');
+        this.promptMagicStrengthSlider = this.request_div.querySelector('.promptMagicStrengthSlider');
+
+        let dropDownIcon = this.request_div.querySelector('.dropDownIcon');
+        dropDownIcon.innerHTML = dropdown_svg;
+
+        let translatePromptBtn = this.request_div.querySelector('.translateBtn.forPrompt');
+        translatePromptBtn.innerHTML = translate_svg;
+        translatePromptBtn.addEventListener('click', async (e) => {
+            if (this.request['prompt'] == undefined || this.request['prompt'] == "")
+                return;
+            let translated = await HostObject.translatePrompt(this.request['prompt']);
+            if (translated != undefined) {
+                this.prompt_input.value = translated;
+                this.request['prompt'] = translated;
+                this.updatePromptHeight();
+                this.prompt_input.classList.remove('flash');
+                window.requestAnimationFrame(function (time) {
+                    window.requestAnimationFrame(function (time) {
+                        this.addClass(this.prompt_input, 'flash');
+                    }.bind(this));
+                }.bind(this));
+            }
+        });
+
+        let copyPromptBtn = this.request_div.querySelector('.copyBtn.forPrompt');
+        copyPromptBtn.innerHTML = copy_svg;
+        this.copyPromptClipboard = new ClipboardJS(copyPromptBtn, {
+            text: function () {
+                if (this.request['prompt'] == undefined || this.request['prompt'] == "")
+                    return "";
+                return this.request['prompt'];
+            }.bind(this)
+        });
+
+        this.copyPromptClipboard.on('success', function (e) {
+            let input_div = this.prompt_input;
+            input_div.classList.remove("flash");
+            window.requestAnimationFrame(function (time) {
+                window.requestAnimationFrame(function (time) {
+                    input_div.classList.add('flash');
+                });
+            });
+            e.clearSelection();
+        }.bind(this));
+
+        let deletePromptBtn = this.request_div.querySelector('.deleteBtn.forPrompt');
+        deletePromptBtn.innerHTML = delete_svg;
+        deletePromptBtn.addEventListener('click', async (e) => {
+            if (this.request['prompt'] == undefined || this.request['prompt'] == "")
+                return;
+            let result = "";
+            this.prompt_input.value = result;
+            this.request['prompt'] = result;
+            this.updatePromptHeight();
+            this.prompt_input.classList.remove('flash');
+            window.requestAnimationFrame(function (time) {
+                window.requestAnimationFrame(function (time) {
+                    this.addClass(this.prompt_input, 'flash');
+                }.bind(this));
+            }.bind(this));
+        });
+
+        let translateNegPromptBtn = this.request_div.querySelector('.translateBtn.forNegPrompt');
+        translateNegPromptBtn.innerHTML = translate_svg;
+        translateNegPromptBtn.addEventListener('click', async (e) => {
+            if (this.request['negative_prompt'] == undefined || this.request['negative_prompt'] == "")
+                return;
+            let translated = await HostObject.translatePrompt(this.request['negative_prompt']);
+            if (translated != undefined) {
+                this.negPrompt_input.value = translated;
+                this.request['negative_prompt'] = translated;
+                this.updateNegPromptHeight();
+                this.negPrompt_input.classList.remove('flash');
+                window.requestAnimationFrame(function (time) {
+                    window.requestAnimationFrame(function (time) {
+                        this.addClass(this.negPrompt_input, 'flash');
+                    }.bind(this));
+                }.bind(this));
+            }
+        });
+
+        let copyNegPromptBtn = this.request_div.querySelector('.copyBtn.forNegPrompt');
+        copyNegPromptBtn.innerHTML = copy_svg;
+        this.copyNegPromptClipboard = new ClipboardJS(copyNegPromptBtn, {
+            text: function () {
+                if (this.request['negative_prompt'] == undefined || this.request['negative_prompt'] == "")
+                    return "";
+                return this.request['negative_prompt'];
+            }.bind(this)
+        });
+
+        this.copyNegPromptClipboard.on('success', function (e) {
+            let input_div = this.negPrompt_input;
+            input_div.classList.remove("flash");
+            window.requestAnimationFrame(function (time) {
+                window.requestAnimationFrame(function (time) {
+                    input_div.classList.add('flash');
+                });
+            });
+            e.clearSelection();
+        }.bind(this));
+
+        let deleteNegPromptBtn = this.request_div.querySelector('.deleteBtn.forNegPrompt');
+        deleteNegPromptBtn.innerHTML = delete_svg;
+        deleteNegPromptBtn.addEventListener('click', async (e) => {
+            if (this.request['negative_prompt'] == undefined || this.request['negative_prompt'] == "")
+                return;
+            let result = "";
+            this.negPrompt_input.value = result;
+            this.request['negative_prompt'] = result;
+            this.updateNegPromptHeight();
+            this.negPrompt_input.classList.remove('flash');
+            window.requestAnimationFrame(function (time) {
+                window.requestAnimationFrame(function (time) {
+                    this.addClass(this.negPrompt_input, 'flash');
+                }.bind(this));
+            }.bind(this));
+        });
+
+
+        for (let key in model_list) {
+            let option = document.createElement('div');
+            option.innerHTML = model_list[key].name;
+            option.setAttribute('modelID', key);
+            this.model_options.appendChild(option);
+            option.addEventListener('mousedown', (e) => {
+                let target = e.target;
+                let modelID = target.getAttribute('modelID');
+                this.model_slect.innerHTML = model_list[modelID].name;
+                this.model_slect_image.src = model_list[modelID].image_src;
+                this.training_resolution.innerText = `${model_list[modelID].training_Width}x${model_list[modelID].training_Height}`;
+                this.sd_Version.innerText = model_list[modelID].sd_Version;
+                this.request['modelId'] = modelID;
+                //console.log(`Selected: ${model_list[modelID].name},ID: ${modelID}`);
+                if (model_list[modelID].sd_Version == 'v2.1') {
+                    this.request['controlNet'] = false;
+                    this.controlNetSelect.innerText = 'None';
+                    this.addClass(this.controlNetSelect, 'disable');
+                } else {
+                    switch (this.request['controlNetType']) {
+                        case undefined:
+                            this.request['controlNet'] = false;
+                            this.controlNetSelect.innerText = 'None';
+                            break;
+                        case 'POSE':
+                            this.request['controlNet'] = true;
+                            this.controlNetSelect.innerText = 'Pose';
+                            break;
+                        case 'CANNY':
+                            this.request['controlNet'] = true;
+                            this.controlNetSelect.innerText = 'Edge';
+                            break;
+                        case 'DEPTH':
+                            this.request['controlNet'] = true;
+                            this.controlNetSelect.innerText = 'Depth';
+                            break;
+                    }
+                    this.controlNetSelect.classList.remove('disable');
+                }
+                this.UpdateImg2ImgUI();
+            });
+        }
+
+        this.lastScrollHeightPormpt = this.prompt_input.scrollHeight;
+        this.lastTextLengthPormpt = this.prompt_input.value.length;
+        this.prompt_input.addEventListener("input", () => {
+            this.request['prompt'] = this.prompt_input.value;
+            this.updatePromptHeight();
+        });
+
+        this.lastScrollHeightNegPormpt = this.negPrompt_input.scrollHeight;
+        this.lastTextLengthNegPormpt = this.negPrompt_input.value.length;
+        this.negPrompt_input.addEventListener('input', () => {
+            this.request['negative_prompt'] = this.negPrompt_input.value;
+            this.updateNegPromptHeight();
+        });
+
+        this.width_lable = this.request_div.querySelector('.widthLabel');
+        this.width_slider.addEventListener('input', this.widthSliderChange.bind(this));
+        this.width_slider.addEventListener('change', this.widthSliderChange.bind(this));
+        this.height_lable = this.request_div.querySelector('.heightLabel');
+        this.height_slider.addEventListener('input', this.heightSliderChange.bind(this));
+        this.height_slider.addEventListener('change', this.heightSliderChange.bind(this));
+
+        this.initStrengthSlider.addEventListener('input', this.initStrengthSliderChange.bind(this));
+        this.initStrengthSlider.addEventListener('change', this.initStrengthSliderChange.bind(this));
+
+        this.promptMagicStrengthSlider.addEventListener('input', this.promptMagicStrengthSliderChange.bind(this));
+        this.promptMagicStrengthSlider.addEventListener('change', this.promptMagicStrengthSliderChange.bind(this));
+
+        let magicWordsLabel = this.request_div.querySelector('.magicWordsLabel');
+        magicWordsLabel.addEventListener('click', (e) => {
+            this.magicWords_checkbox.checked = !this.magicWords_checkbox.checked;
+            this.request['magicWords'] = this.magicWords_checkbox.checked;
+        });
+
+        let promptMagicLabel = this.request_div.querySelector('.promptMagicLabel');
+        promptMagicLabel.addEventListener('click', (e) => {
+            this.promptMagic_checkbox.checked = !this.promptMagic_checkbox.checked;
+            this.request['promptMagic'] = this.promptMagic_checkbox.checked;
+            this.promptMagicStrengthContainer.classList.remove('expand');
+            if (this.request['promptMagic'])
+                this.addClass(this.promptMagicStrengthContainer, 'expand');
+            this.UpdateImg2ImgUI();
+        });
+
+        let tilingLabel = this.request_div.querySelector('.tilingLabel');
+        tilingLabel.addEventListener('click', (e) => {
+            this.tiling_checkbox.checked = !this.tiling_checkbox.checked;
+            this.request['tiling'] = this.tiling_checkbox.checked;
+        });
+
+        this.initImageUploadBtn.addEventListener('click', this.uploadInitImage.bind(this));
+        this.initImageRemoveBtn.addEventListener('click', this.removeInitImage.bind(this));
+
+        this.controlNetSelect.addEventListener('click', (e) => {
+            this.showControlNetOptions = !this.showControlNetOptions;
+            this.controlNetOptions.classList.remove('expand');
+            if (this.showControlNetOptions)
+                this.addClass(this.controlNetOptions, 'expand');
+        });
+
+        this.controlNetSelect.addEventListener('blur', (e) => {
+            this.showControlNetOptions = false;
+            this.controlNetOptions.classList.remove('expand');
+        });
+
+        this.controlNetOptions.childNodes.forEach((element, index) => {
+            let myIndex = index;
+            let requestString = [null, 'POSE', 'CANNY', 'DEPTH'];
+            element.addEventListener('mousedown', (e) => {
+                this.controlNetSelect.innerText = element.innerText;
+                if (myIndex == 0) {
+                    this.request['controlNet'] = false;
+                    this.request['controlNetType'] = undefined;
+                } else {
+                    this.request['controlNet'] = true;
+                    this.request['controlNetType'] = requestString[index];
+                }
+                this.UpdateImg2ImgUI();
+            });
+        });
+
+        this.model_slect.addEventListener('click', (e) => {
+            this.showModelOptions = !this.showModelOptions;
+            this.model_options.classList.remove('expand');
+            if (this.showModelOptions)
+                this.addClass(this.model_options, 'expand');
+        });
+
+        this.model_slect.addEventListener('blur', (e) => {
+            this.showModelOptions = false;
+            this.model_options.classList.remove('expand');
+        });
+
+        let upscaleIcon = this.request_div.querySelector('.upscaleBtn_icon');
+        upscaleIcon.innerHTML = upscale_svg;
+        let downloadIcon = this.request_div.querySelector('.downloadBtn_icon');
+        downloadIcon.innerHTML = download_svg;
+        let generateIcon = this.request_div.querySelector('.generateBtn_icon');
+        generateIcon.innerHTML = generate_svg;
+
+        let expandDownloadButton = this.request_div.querySelector('.downloadBtn');
+        let expandGenerateButton = this.request_div.querySelector('.generateBtn');
+        let expandUpscaleButton = this.request_div.querySelector('.upscaleBtn');
+
+        expandDownloadButton.addEventListener('click', this.downloadImage.bind(this));
+        expandGenerateButton.addEventListener('click', this.reGenerate.bind(this));
+        expandUpscaleButton.addEventListener('click', this.upScale.bind(this));
+
+        let expandButton = document.createElement('button');
+        expandButton.className = 'expandBtn';
+        expandButton.innerHTML = expand_svg;
+
+        expandButton.addEventListener('click', (e) => {
+            this.expand = !this.expand;
+            this.RequestExpand();
+        });
+
+        this.content_div.appendChild(this.request_div);
+        this.content_div.appendChild(expandButton);
+        this.content_div.appendChild(this.imageholder_div);
+
+        this.info_div = document.createElement('p');
+        this.info_div.className = 'info';
+        this.info_div.innerHTML = 'Wait to generate';
+
+        let avatar_div = document.createElement('div');
+        avatar_div.className = 'avatar';
+        let avatar_img = document.createElement('img');
+        avatar_img.src = "source/leonardo-logo.png";
+        avatar_div.appendChild(avatar_img);
+
+        this.button_div = document.createElement('div');
+        this.button_div.className = 'buttons';
+        this.button_div.style.width = this.expand ? '90px' : '180px';
+
+        let copyButton = document.createElement("button");
+        copyButton.classList.add("chatBtn");
+        copyButton.classList.add("alwaysOn");
+        copyButton.classList.add("chatCopyBtn");
+        copyButton.innerHTML = copy_svg;
+        copyButton.addEventListener('click', this.copyBubble.bind(this));
+
+        let downloadButton = document.createElement("button");
+        downloadButton.classList.add("chatBtn");
+        downloadButton.innerHTML = download_svg;
+        downloadButton.addEventListener('click', this.downloadImage.bind(this));
+
+        let deleteButton = document.createElement("button");
+        deleteButton.classList.add("chatBtn");
+        deleteButton.innerHTML = delete_svg
+        deleteButton.addEventListener('click', this.deleteBubble.bind(this));
+
+        let regenerateButton = document.createElement("button");
+        regenerateButton.classList.add("chatBtn");
+        regenerateButton.innerHTML = generate_svg;
+        regenerateButton.addEventListener('click', this.reGenerate.bind(this));
+
+        let upscaleButton = document.createElement("button");
+        upscaleButton.classList.add("chatBtn");
+        upscaleButton.innerHTML = upscale_svg;
+        upscaleButton.addEventListener('click', this.upScale.bind(this));
+
+        let openWebButton = document.createElement("button");
+        openWebButton.classList.add("chatBtn");
+        openWebButton.classList.add("alwaysOn");
+        openWebButton.innerHTML = openpage_svg;
+        openWebButton.addEventListener('click', async () => {
+            HostObject.openPage();
+        });
+
+        this.button_div.appendChild(deleteButton);
+        this.button_div.appendChild(openWebButton);
+        this.button_div.appendChild(copyButton);
+        this.button_div.appendChild(regenerateButton);
+        this.button_div.appendChild(downloadButton);
+        this.button_div.appendChild(upscaleButton);
+
+        this.div.appendChild(this.content_div);
+        this.div.appendChild(this.info_div);
+        this.div.appendChild(avatar_div);
+        this.div.appendChild(this.button_div);
+
+        this.UpdateUI();
+
+        if (isactive)
+            this.active();
+
+        this.request_div.style.height = this.expand ? "" : '0px';
+        if (this.expand)
+            this.addClass(this.request_div, 'expand');
+        this.button_div.style.width = this.expand ? '90px' : '180px';
+    }
+    UpdateUI() {
+        let prompt = this.request['prompt'];
+        let negPrompt = this.request['negative_prompt'] ?? "";
+        let model = this.request['modelId'] ?? 'b7aa9939-abed-4d4e-96c4-140b8c65dd92';
+        let width = this.request['width'] ?? 512;
+        let height = this.request['height'] ?? 512;
+        let magicWords = this.request['magicWords'] ?? false;
+        let promptMagic = this.request['promptMagic'] ?? true;
+        let tiling = this.request['tiling'] ?? false;
+        let init_image_id = this.request['init_image_id'];
+        let init_image_bass64 = this.request['init_image_base64'];
+        let init_strength = this.request['init_strength'] ?? 0.4;
+        let prompt_magic_strength = this.request['prompt_magic_strength'] ?? 0.4;
+        let controlNet = this.request['controlNet'];
+        let controlNetType = this.request['controlNetType'];
+
+        this.width_slider.value = width;
+        this.height_slider.value = height;
+        this.width_lable.innerText = `Width: ${width}px`;
+        this.height_lable.innerText = `Height: ${height}px`;
+        this.imageholder_div.style.width = '512px';
+        this.imageholder_div.style.height = (height * 430.0 / width) + 'px';
+        this.prompt_input.value = prompt;
+        this.negPrompt_input.value = negPrompt;
+        this.magicWords_checkbox.checked = magicWords;
+        this.promptMagic_checkbox.checked = promptMagic;
+        if (promptMagic)
+            this.addClass(this.promptMagicStrengthContainer, 'expand');
+        this.tiling_checkbox.checked = tiling;
+        window.requestAnimationFrame(function (time) {
+            this.updatePromptHeight();
+            this.updateNegPromptHeight();
+        }.bind(this));
+        this.initImageUploadBtn.style.backgroundImage = `url(${init_image_bass64 ?? ''})`;
+        this.initImageLabel.innerText = init_image_id ? '' : 'Upload am ImitImage';
+        this.initImagePreview.src = init_image_bass64 ?? '';
+        this.initStrengthSlider.value = init_strength;
+        this.initStrengthLabel.innerText = `Init Strength: ${init_strength}`;
+        if (controlNet == false) {
+            this.controlNetSelect.innerText = 'None';
+        } else {
+            switch (controlNetType) {
+                case 'POSE':
+                    this.controlNetSelect.innerText = 'Pose';
+                    break;
+                case 'CANNY':
+                    this.controlNetSelect.innerText = 'Edge';
+                    break;
+                case 'DEPTH':
+                    this.controlNetSelect.innerText = 'Depth';
+                    break;
+            }
+        }
+        this.model_slect.innerHTML = model_list[model].name;
+        this.model_slect_image.src = model_list[model].image_src;
+        this.training_resolution.innerText = `${model_list[model].training_Width}x${model_list[model].training_Height}`;
+        this.sd_Version.innerText = model_list[model].sd_Version;
+        this.promptMagicStrengthSlider.value = prompt_magic_strength;
+        this.promptMagicStrengthLabel.innerText = `PM Strength: ${prompt_magic_strength}`;
+
+        if (model_list[model].sd_Version == 'v2.1') {
+            this.request['controlNet'] = false;
+            this.controlNetSelect.innerText = 'None';
+            this.addClass(this.controlNetSelect, 'disable');
+        } else {
+            switch (this.request['controlNetType']) {
+                case undefined:
+                    this.request['controlNet'] = false;
+                    this.controlNetSelect.innerText = 'None';
+                    break;
+                case 'POSE':
+                    this.request['controlNet'] = true;
+                    this.controlNetSelect.innerText = 'Pose';
+                    break;
+                case 'CANNY':
+                    this.request['controlNet'] = true;
+                    this.controlNetSelect.innerText = 'Edge';
+                    break;
+                case 'DEPTH':
+                    this.request['controlNet'] = true;
+                    this.controlNetSelect.innerText = 'Depth';
+                    break;
+            }
+            this.controlNetSelect.classList.remove('disable');
+        }
+        this.UpdateImg2ImgUI();
+    }
+    RequestExpand() {
+        this.request_div.style.height = this.request_div.getClientRects()[0].height + 'px';
+        window.requestAnimationFrame(function (time) {
+            this.request_div.style.height = this.expand ? (this.prompt_warpper.getClientRects()[0].height + 'px') : '0px';
+            if (this.expandTimeout != undefined)
+                clearTimeout(this.expandTimeout);
+            this.expandTimeout = setTimeout(() => {
+                this.request_div.style.height = this.expand ? "" : '0px';
+            }, 200);
+        }.bind(this));
+        this.request_div.classList.remove('expand');
+        if (this.expand)
+            this.addClass(this.request_div, 'expand');
+        this.button_div.style.width = this.expand ? '90px' : '180px';
+    }
+    UpdateImg2ImgUI() {
+        this.img2img_div.classList.remove('expand', 'hasImage', 'hasControlNet');
+        if (!this.request['promptMagic'])
+            this.addClass(this.img2img_div, 'expand');
+        if (this.request['init_image_id'] != undefined)
+            this.addClass(this.img2img_div, 'hasImage');
+        if (this.request['controlNet'])
+            this.addClass(this.img2img_div, 'hasControlNet');
+    }
+    widthSliderChange(e) {
+        if (this.interval != null) {
+            this.width_slider.value = this.request['width'];
+            e.preventDefault();
+            return;
+        }
+        this.request['width'] = parseInt(this.width_slider.value);
+        this.width_lable.innerText = `Width: ${this.request['width']}px`;
+        this.imageholder_div.style.height = (this.request['height'] * 430.0 / this.request['width']) + 'px';
+    }
+    heightSliderChange(e) {
+        if (this.interval != null) {
+            this.height_slider.value = this.request['height'];
+            e.preventDefault();
+            return;
+        }
+        this.request['height'] = parseInt(this.height_slider.value);
+        this.height_lable.innerText = `Height: ${this.request['height']}px`;
+        this.imageholder_div.style.height = (this.request['height'] * 430.0 / this.request['width']) + 'px';
+    }
+    initStrengthSliderChange(e) {
+        this.request['init_strength'] = parseFloat(this.initStrengthSlider.value);
+        this.initStrengthLabel.innerText = `Init Strength: ${this.request['init_strength']}`;
+    }
+    promptMagicStrengthSliderChange(e) {
+        this.request['prompt_magic_strength'] = parseFloat(this.promptMagicStrengthSlider.value);
+        this.promptMagicStrengthLabel.innerText = `PM Strength: ${this.request['prompt_magic_strength']}`;
+    }
+    updatePromptHeight() {
+        let inputTextLength = this.prompt_input.value.length;
+        if (inputTextLength < this.lastTextLengthPormpt) {
+            this.prompt_input.style.height = "";
+        }
+        let inputScrollHeight = this.prompt_input.scrollHeight;
+        if (this.lastScrollHeightPormpt < inputScrollHeight || !this.prompt_input.style.height) {
+            this.lastScrollHeightPormpt = inputScrollHeight;
+            this.prompt_input.style.height = inputScrollHeight + "px";
+        }
+        this.lastTextLengthPormpt = this.prompt_input.value.length;
+    }
+    updateNegPromptHeight() {
+        let inputTextLength = this.negPrompt_input.value.length;
+        if (inputTextLength < this.lastTextLengthNegPormpt) {
+            this.negPrompt_input.style.height = "";
+        }
+        let inputScrollHeight = this.negPrompt_input.scrollHeight;
+
+        if (this.lastScrollHeightNegPormpt < inputScrollHeight || !this.negPrompt_input.style.height) {
+            this.lastScrollHeightNegPormpt = inputScrollHeight;
+            this.negPrompt_input.style.height = inputScrollHeight + "px";
+        }
+        this.lastTextLengthNegPormpt = this.negPrompt_input.value.length;
+    }
+
+    active() {
+        this.info_div.innerHTML = `Generating`;
+        this.div.classList.remove('FAILED', 'COMPLETE', 'PENDING');
+        this.addClass(this.div, 'PENDING');
+
+        clearInterval(this.interval);
+        this.interval = setInterval(this.timerCount, 20, (new Date()).getTime(), this.timer_div);
+
+        RefreshScroll(this.div, this.chatID, true, "bottom");
+    }
+
+    async downloadImage() {
+        if (this.interval != undefined || this.org_img_id == undefined)
+            return;
+
+        let src = '';
+        let fileName = '';
+        if (this.show == 1) {
+            src = this.org_img.src;
+            fileName = this.org_img_fileName;
+        }
+        else if (this.show == 2) {
+            src = this.upscale_img.src;
+            fileName = this.upscale_img_fileName;
+        }
+
+        if (src != "")
+            HostObject.saveImage(src, fileName);
+    }
+    async copyBubble() {
+        await HostObject.copyLeonardoBubble(this.chatID, JSON.stringify(this.request));
+    }
+    async deleteBubble() {
+        if (this.interval != undefined)
+            return;
+
+        this.removeInitImage();
+
+        clearInterval(this.interval);
+        this.interval = undefined;
+
+        this.div.remove();
+        bubbleDic[this.id] = undefined;
+    }
+    async reGenerate() {
+        if (this.interval != undefined)
+            return;
+
+        this.active();
+        this.show = 0;
+        this.org_img_id = undefined;
+        this.upscale_img_id = undefined;
+        this.generation_id = undefined;
+        this.upscalejob_id = undefined;
+
+        this.addClass(this.org_img, 'hide');
+        this.org_img.classList.remove('fade');
+        this.addClass(this.upscale_img, 'hide');
+        this.addClass(this.upscale_img_icon, 'hide');
+        this.addClass(this.error_div, 'hide');
+        this.addClass(this.retry_div, 'hide');
+
+        await HostObject.regenerateImage(this.id, this.chatID, JSON.stringify(this.request));
+    }
+    async reTry() {
+        if (this.interval != undefined)
+            return;
+        if (this.upscalejob_id != undefined) {
+            this.addClass(this.org_img, 'fade');
+            this.addClass(this.error_div, 'hide');
+            this.addClass(this.retry_div, 'hide');
+            this.active();
+
+            await HostObject.reTryVariation(this.id, this.chatID, this.upscalejob_id);
+            return;
+        } else if (this.generation_id != undefined) {
+            this.addClass(this.error_div, 'hide');
+            this.addClass(this.retry_div, 'hide');
+            this.active();
+
+            await HostObject.reTryGeneration(this.id, this.chatID, this.generation_id, this.prompt);
+            return;
+        }
+    }
+    async upScale() {
+        if (this.interval != undefined || this.org_img_id == undefined)
+            return;
+
+        if (this.upscale_img_id != undefined) {
+            if (this.show == 1) {
+                this.upscale_img.classList.remove('hide');
+                this.upscale_img_icon.classList.remove('hide');
+                this.addClass(this.org_img, 'hide');
+                this.show = 2;
+            } else {
+                this.org_img.classList.remove('hide');
+                this.org_img.classList.remove('fade');
+                this.addClass(this.upscale_img, 'hide');
+                this.addClass(this.upscale_img_icon, 'hide');
+                this.show = 1;
+            }
+            return;
+        }
+
+        this.upscalejob_id = undefined;
+        this.addClass(this.org_img, 'fade');
+        this.addClass(this.error_div, 'hide');
+        this.addClass(this.retry_div, 'hide');
+        this.active();
+
+        await HostObject.upscaleImage(this.id, this.chatID, this.org_img_id);
+
+    }
+    async uploadInitImage() {
+        if (this.img_div.classList.contains('img_loading'))
+            return;
+        this.removeInitImage();
+        this.initImageLabel.innerText = 'Uploading...';
+        this.addClass(this.img_div, 'img_loading');
+        this.img_div.classList.remove('img_error');
+        this.img_div.classList.remove('img_finish');
+        HostObject.uploadInitImage(this.id);
+    }
+    async removeInitImage() {
+        if (this.img_div.classList.contains('img_loading'))
+            return;
+        this.img_div.classList.remove('img_loading');
+        this.img_div.classList.remove('img_finish');
+        this.img_div.classList.remove('img_error');
+        if (this.request['init_image_id'] != undefined)
+            HostObject.deleteInitImage(this.request['init_image_id']);
+        this.request['init_image_id'] = undefined;
+        this.request['init_image_base64'] = undefined;
+        this.initImageUploadBtn.style.backgroundImage = 'url()';
+        this.initImageLabel.innerText = 'Upload am ImitImage';
+        this.initImagePreview.src = '';
+        this.UpdateImg2ImgUI();
+    }
+
+    update(msg) {
+        if (msg['image_id'] != undefined) {
+            this.org_img.src = msg['image_base64'];
+            this.org_img_fileName = msg['image_fileName'];
+            this.org_img_id = msg['image_id'];
+            this.generation_id = msg["generation_id"];
+
+            this.org_img.classList.remove('hide');
+            this.show = 1;
+
+            this.addClass(this.error_div, 'hide');
+            this.addClass(this.retry_div, 'hide');
+            this.div.classList.remove('FAILED', 'COMPLETE', 'PENDING');
+            this.addClass(this.div, 'COMPLETE');
+        }
+
+        if (msg['variation_id'] != undefined) {
+            this.upscale_img.src = msg['variation_base64'];
+            this.upscale_img_fileName = msg['variation_fileName'];
+            this.upscale_img_id = msg['variation_id'];
+            this.upscalejob_id = msg["upscalejob_id"];
+
+            this.upscale_img.classList.remove('hide');
+            this.upscale_img_icon.classList.remove('hide');
+            this.show = 2;
+
+            this.addClass(this.error_div, 'hide');
+            this.addClass(this.retry_div, 'hide');
+            this.div.classList.remove('FAILED', 'COMPLETE', 'PENDING');
+            this.addClass(this.div, 'COMPLETE');
+        }
+
+        if (msg['initImage_base64'] != undefined) {
+            this.initImageUploadBtn.style.backgroundImage = `url(${msg['initImage_base64']})`;
+            this.request['init_image_base64'] = msg['initImage_base64'];
+        }
+
+        if (msg['initImage_id'] != undefined) {
+            let initImage_id = msg['initImage_id'];
+            if (initImage_id.startsWith('error:')) {
+                let errorMessage = initImage_id.substring(6);
+                console.log(errorMessage);
+                this.request['init_image_id'] = undefined;
+                this.request['init_image_base64'] = undefined;
+                this.initImageUploadBtn.style.backgroundImage = `url()`;
+                this.initImageLabel.innerText = (errorMessage == 'cancel') ? 'Upload Cancel' : errorMessage;
+                this.initImagePreview.src = '';
+                if (errorMessage != 'cancel')
+                    this.addClass(this.img_div, 'img_error');
+            } else {
+                this.request['init_image_id'] = initImage_id;
+                this.initImageLabel.innerText = '';
+                this.initImagePreview.src = this.request['init_image_base64'];
+                this.img_div.classList.remove('img_finish');
+                this.addClass(this.img_div, 'img_finish');
+            }
+            this.img_div.classList.remove('img_loading');
+            this.UpdateImg2ImgUI();
+        }
+
+        if (msg['error_msg'] != undefined) {
+            this.error_info.innerHTML = msg['error_msg'];
+
+            if (msg['upscalejob_id'] == undefined && msg['generation_id'] == undefined)
+                this.error_div.classList.remove('hide');
+            else
+                this.retry_div.classList.remove('hide');
+
+            this.generation_id = msg["generation_id"];
+            this.upscalejob_id = msg["upscalejob_id"];
+            this.div.classList.remove('FAILED', 'COMPLETE', 'PENDING');
+            this.addClass(this.div, 'FAILED');
+        }
+
+        RefreshScroll(this.div, this.chatID, true, "bottom");
+
+        clearInterval(this.interval);
+        this.interval = undefined;
+
+        this.token = msg['token'] ?? this.token;
+        this.model = msg['model'] ?? this.model;
+        this.price = msg['price'] ?? this.price;
+        let price = this.price ? (parseFloat(this.price.toFixed(4)) + '&#65504') : 'unknow';
+
+        this.info_div.innerHTML = `model: ${this.model ?? 'null'}, token: ${this.token ?? 'unknow'}, price: ${price}`;
+    }
+
+    timerCount(startTime, timer_div) {
+        var now = (new Date()).getTime();
+        var t = now - startTime;
+        timer_div.innerHTML = (t / 1000).toFixed(2) + "s";
+    }
+    addClass(element, className) {
+        if (!element.classList.contains(className))
+            element.classList.add(className);
+    }
+}

@@ -861,6 +861,7 @@ class MainGame extends Phaser.Scene {
         }
     }
     create() {
+        this.cam.postFX.addTiltShift(0.5, 0.1, 0.8, 0.5, 1, 1);
 
         this.BG = this.add.image(w / 2, h / 2, 'BG');
         //this.BG.setTint(getColor(67, 107, 135));
@@ -1678,8 +1679,46 @@ class MainGame extends Phaser.Scene {
         this.UIContainer.add(this.TimeNumber);
         this.UIContainer.add(this.DistanceNumber);
 
+        this.canvas = document.createElement('canvas')
+        this.canvas.width = 256
+        this.canvas.height = 16
+        this.context = this.canvas.getContext('2d')
 
+        this.context.fillStyle = '#ff0000';
+        this.context.fillRect(0, 0, 256, 16);
+
+        this.context.fillStyle = '#ffff00';
+        this.context.fillRect(0, 0, 16, 16);
+
+        this.texture = this.textures.addCanvas('gradient', this.canvas);
+        this.image = this.add.image(0, 0, 'gradient');
+        this.UIContainer.add(this.image)
+
+        //this.texture.refresh();
+        this.timer = 0
+        this.grow = true
+
+        this.time.addEvent({ delay: 40, callback: this.updateTexture, callbackScope: this, loop: true });
+        
         playerDied = true;
+    }
+    updateTexture() {
+        this.context.clearRect(0, 0, 256, 16)
+        this.context.fillStyle = '#ff0000';
+        this.context.fillRect(0, 0, 256, 16);
+
+        this.context.fillStyle = '#ff00ff';
+        this.context.fillRect(this.timer, 0, 16, 16);
+
+        if (this.grow) {
+            this.timer += 3
+            this.grow = this.timer < 128
+        } else {
+            this.timer -= 3
+            this.grow = this.timer < 0
+        }
+        this.texture.refresh()
+        //console.log(1)
     }
     makeNumber(myTime, XPos, YPos, Target, boardSize, numberSize, NumberArray, Step, Dir) {
         let startColor = [116, 144, 204];
